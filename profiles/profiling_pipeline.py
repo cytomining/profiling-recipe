@@ -17,13 +17,10 @@ overwrite = args.overwrite  # The default is False
 # Load constants
 project = "2019_07_11_JUMP-CP"
 batches = [
-    "2020_06_25_Stain2_Batch2_Binned",
-    "2020_06_25_Stain2_Batch2_Confocal",
-    "2020_06_25_Stain2_Batch2_MitoCompare",
-    "2020_06_25_Stain2_Batch2_Multiplane",
-    "2020_06_25_Stain2_Batch2_Redone",
-    "2020_06_25_Stain2_Batch2_Repeat",
-    "2020_06_25_Stain2_Batch2_Standard",
+    "2020_08_11_Stain3_Bin1",
+	"2020_08_11_Stain3_HighExp",
+	"2020_08_11_Stain3_Multiplane",
+	"2020_08_11_Stain3_Standard"
 ]
 
 for batch in batches:
