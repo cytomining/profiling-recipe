@@ -53,7 +53,8 @@ for batch in batches:
 
     # Load plate information
     plate_dir = pathlib.PurePath(single_cell_dir, batch)
-    plates = [x for x in os.listdir(plate_dir) if x.startswith("BR")]
+    # plates = [x for x in os.listdir(plate_dir) if x.startswith("BR")]
+    plates = [x for x in os.listdir(plate_dir)]
 
     if not overwrite:
         # Only process plates that are not already completely processed
