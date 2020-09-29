@@ -28,6 +28,7 @@ batches = [
 	"2020_08_11_Stain3_HighExp",
 	"2020_08_11_Stain3_Multiplane",
 	"2020_08_11_Stain3_Standard",
+	"2020_08_11_Stain3_Yokogawa",
 	"2020_09_22_Stain4_Bin1",
 	"2020_09_22_Stain4_Bray",
 	"2020_09_22_Stain4_Bray_HighExp",
