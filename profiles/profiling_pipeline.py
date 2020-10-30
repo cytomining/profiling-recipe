@@ -36,7 +36,9 @@ batches = [
 	"2020_09_22_Stain4_Standard",
 	"2020_10_02_RestainedCell1",
 	"2020_10_07_Plate1",
-	"2020_10_20_Cell1_restainedReimaged"
+	"2020_10_20_Cell1_restainedReimaged",
+	"2020_10_20_Cell1_restainedReimaged_Bin1Pipeline",
+	"2020_10_20_Plate1_PE_Bin1"
 ]
 
 for batch in batches:
