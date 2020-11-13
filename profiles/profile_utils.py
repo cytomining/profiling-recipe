@@ -16,7 +16,7 @@ def load_pipeline(config_file):
                     continue
                 batch = data['batch']
                 plates = [str(x) for x in data['plates']]
-                profile_config = {batch: plates}
+                profile_config[batch] = plates
 
     return pipeline, profile_config
 
