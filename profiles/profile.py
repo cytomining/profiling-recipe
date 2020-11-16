@@ -25,7 +25,7 @@ def process_profile(batch, plate, pipeline):
     annotate_output_file = pathlib.PurePath(output_dir, f'{plate}_augmented.csv.gz')
     normalize_output_file = pathlib.PurePath(output_dir, f'{plate}_normalized.csv.gz')
     normalize_output_dmso_file = pathlib.PurePath(output_dir, f'{plate}_normalized_dmso.csv.gz')
-    feature_output_file = pathlib.PurePath(output_dir, f'{plate}_normalized_feature_selected.csv.gz')
+    feature_output_file = pathlib.PurePath(output_dir, f'{plate}_normalized_feature_select.csv.gz')
     feature_output_dmso_file = pathlib.PurePath(output_dir, f'{plate}_normalized_feature_select_dmso.csv.gz')
 
     # Load pipeline options
@@ -47,13 +47,26 @@ def process_profile(batch, plate, pipeline):
     annotate_steps = pipeline['annotate']
     annotate_well_column = annotate_steps['well_column']
     if annotate_steps['perform']:
-        anno_df = annotate(
-            profiles=aggregate_output_file,
-            platemap=plate_map_df,
-            join_on=[platemap_well_column, annotate_well_column],
-            format_broad_cmap=True,
-            perturbation_mode="chemical",
-        )
+        if annotate_steps['external']:
+            external_df = pd.read_csv(pathlib.PurePath('.', 'metadata', 'moa', annotate_steps['external']['filename']), sep='\t')
+            anno_df = annotate(
+                profiles=aggregate_output_file,
+                platemap=plate_map_df,
+                join_on=[platemap_well_column, annotate_well_column],
+                format_broad_cmap=True,
+                perturbation_mode="chemical",
+                external_metadata=external_df,
+                external_join_left=["Metadata_broad_sample"],
+                external_join_right=["Metadata_broad_sample"],
+            )
+        else:
+            anno_df = annotate(
+                profiles=aggregate_output_file,
+                platemap=plate_map_df,
+                join_on=[platemap_well_column, annotate_well_column],
+                format_broad_cmap=True,
+                perturbation_mode="chemical",
+            )
 
     anno_df = (
         anno_df.rename({"Image_Metadata_Plate": "Metadata_Plate",
