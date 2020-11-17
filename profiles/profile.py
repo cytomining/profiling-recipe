@@ -15,7 +15,7 @@ from pycytominer import (
 )
 
 
-def process_profile(batch, plate, pipeline):
+def process_profile(batch, plate, cell, pipeline):
     # Set output directory information
     pipeline_output = pipeline['output_dir']
     output_dir = pathlib.PurePath('.', pipeline_output, batch, plate)
@@ -48,11 +48,12 @@ def process_profile(batch, plate, pipeline):
     annotate_well_column = annotate_steps['well_column']
     if annotate_steps['perform']:
         if annotate_steps['external']:
-            external_df = pd.read_csv(pathlib.PurePath('.', 'metadata', 'moa', annotate_steps['external']['filename']), sep='\t')
+            external_df = pd.read_csv(pathlib.PurePath('.', 'metadata', 'moa', annotate_steps['external']), sep='\t')
             anno_df = annotate(
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
+                cell_id=cell,
                 format_broad_cmap=True,
                 perturbation_mode="chemical",
                 external_metadata=external_df,
@@ -64,6 +65,7 @@ def process_profile(batch, plate, pipeline):
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
+                cell_id=cell,
                 format_broad_cmap=True,
                 perturbation_mode="chemical",
             )
@@ -71,8 +73,8 @@ def process_profile(batch, plate, pipeline):
     anno_df = (
         anno_df.rename({"Image_Metadata_Plate": "Metadata_Plate",
                         "Image_Metadata_Well": "Metadata_Well"}, axis="columns")
-        .assign(Metadata_Assay_Plate_Barcode=barcode_plate_map_df.Assay_Plate_Barcode.values[0],
-                Metadata_Plate_Map_Name=barcode_plate_map_df.Plate_Map_Name.values[0])
+        .assign(Metadata_Assay_Plate_Barcode=plate,
+                Metadata_Plate_Map_Name=barcode_plate_map_df.loc[barcode_plate_map_df.Assay_Plate_Barcode == plate, 'Plate_Map_Name'].values[0])
     )
 
     # Reoroder columns

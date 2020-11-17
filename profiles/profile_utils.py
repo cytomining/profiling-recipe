@@ -15,7 +15,7 @@ def load_pipeline(config_file):
                 if not process:
                     continue
                 batch = data['batch']
-                plates = [str(x) for x in data['plates']]
+                plates = [[str(x['name']), str(x['cell'])] for x in data['plates'] if x['process']]
                 profile_config[batch] = plates
 
     return pipeline, profile_config
