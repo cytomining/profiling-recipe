@@ -13,7 +13,10 @@ config_file = pathlib.PurePath('.', 'config.yml')
 
 pipeline, profile_config = load_pipeline(config_file)
 
+print(profile_config)
+
 for batch in profile_config:
     for plate, cell in profile_config[batch]:
+        print(batch, plate, cell)
         print(f'Now processing... batch: {batch}, plate: {plate}')
         process_profile(batch=batch, plate=plate, cell=cell, pipeline=pipeline)
