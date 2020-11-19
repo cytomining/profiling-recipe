@@ -24,9 +24,9 @@ def process_profile(batch, plate, cell, pipeline):
     aggregate_output_file = pathlib.PurePath(output_dir, f'{plate}.csv.gz')
     annotate_output_file = pathlib.PurePath(output_dir, f'{plate}_augmented.csv.gz')
     normalize_output_file = pathlib.PurePath(output_dir, f'{plate}_normalized.csv.gz')
-    normalize_output_dmso_file = pathlib.PurePath(output_dir, f'{plate}_normalized_dmso.csv.gz')
+    normalize_output_negcon_file = pathlib.PurePath(output_dir, f'{plate}_normalized_negcon.csv.gz')
     feature_output_file = pathlib.PurePath(output_dir, f'{plate}_normalized_feature_select.csv.gz')
-    feature_output_dmso_file = pathlib.PurePath(output_dir, f'{plate}_normalized_feature_select_dmso.csv.gz')
+    feature_output_negcon_file = pathlib.PurePath(output_dir, f'{plate}_normalized_feature_select_negcon.csv.gz')
 
     # Load pipeline options
     compression = process_pipeline(pipeline["options"], option="compression")
@@ -101,13 +101,13 @@ def process_profile(batch, plate, cell, pipeline):
             float_format=float_format,
             compression=compression,
         )
-    if normalize_steps['dmso']:
+    if normalize_steps['negcon']:
         normalize(
             profiles=annotate_output_file,
             features=normalization_features,
-            samples="Metadata_broad_sample == 'DMSO'",
+            samples="Metadata_control_type == 'negcon'",
             method=normalization_method,
-            output_file=normalize_output_dmso_file,
+            output_file=normalize_output_negcon_file,
             float_format=float_format,
             compression=compression,
         )
@@ -125,12 +125,12 @@ def process_profile(batch, plate, cell, pipeline):
             float_format=float_format,
             compression=compression,
         )
-    if feature_select_steps['dmso']:
+    if feature_select_steps['negcon']:
         feature_select(
-            profiles=normalize_output_dmso_file,
+            profiles=normalize_output_negcon_file,
             features=feature_select_features,
             operation=feature_select_operations,
-            output_file=feature_output_dmso_file,
+            output_file=feature_output_negcon_file,
             float_format=float_format,
             compression=compression,
         )
