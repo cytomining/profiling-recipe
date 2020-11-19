@@ -55,8 +55,6 @@ def process_profile(batch, plate, cell, pipeline):
                 join_on=[platemap_well_column, annotate_well_column],
                 cell_id=cell,
                 format_broad_cmap=True,
-                perturbation_mode="chemical",
-                external_metadata=external_df,
                 external_join_left=["Metadata_broad_sample"],
                 external_join_right=["Metadata_broad_sample"],
             )
