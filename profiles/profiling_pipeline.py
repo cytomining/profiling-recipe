@@ -8,10 +8,14 @@ Perform the profiling pipeline (defined in profile.py).
 import pathlib
 from profile_utils import load_pipeline
 from profile import process_profile
+import argparse
 
-config_file = pathlib.PurePath('.', 'config.yml')
+parser = argparse.ArgumentParser(description='Run the profiling pipeline')
+parser.add_argument('--config', help='Config file')
 
-pipeline, profile_config = load_pipeline(config_file)
+args = parser.parse_args()
+
+pipeline, profile_config = load_pipeline(args.config)
 
 for batch in profile_config:
     for plate, cell in profile_config[batch]:
