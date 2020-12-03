@@ -6,16 +6,20 @@ import yaml
 
 def load_pipeline(config_file):
     profile_config = {}
-    with open(config_file, 'r') as stream:
+    with open(config_file, "r") as stream:
         for data in yaml.load_all(stream, Loader=yaml.FullLoader):
-            if 'pipeline' in data.keys():
+            if "pipeline" in data.keys():
                 pipeline = data
             else:
-                process = data['process']
+                process = data["process"]
                 if not process:
                     continue
-                batch = data['batch']
-                plates = [[str(x['name']), str(x['cell'])] for x in data['plates'] if x['process']]
+                batch = data["batch"]
+                plates = [
+                    [str(x["name"]), str(x["cell"])]
+                    for x in data["plates"]
+                    if x["process"]
+                ]
                 profile_config[batch] = plates
 
     return pipeline, profile_config
