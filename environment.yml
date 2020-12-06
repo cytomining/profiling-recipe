@@ -1,0 +1,11 @@
+name: profiling
+channels:
+- conda-forge
+dependencies:
+- conda-forge::python=3.7.1
+- conda-forge::pandas=0.24.2
+- conda-forge::pip=19.2.2
+- conda-forge::pyyaml=5.3.1
+- pip
+- pip:
+  - git+https://github.com/cytomining/pycytominer@c1aa34b641b4e07eb5cbd424166f31355abdbd4d
