@@ -45,7 +45,6 @@ def process_profile(batch, plate, cell, pipeline):
     barcode_plate_map_df = pd.read_csv(
         barcode_plate_map_file, dtype={"Assay_Plate_Barcode": str}
     )
-    barcode_plate_map_df = pd.read_csv(barcode_plate_map_file)
     plate_map_name = barcode_plate_map_df.query(
         "Assay_Plate_Barcode == @plate"
     ).Plate_Map_Name.values[0]
