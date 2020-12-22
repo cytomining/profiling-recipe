@@ -42,9 +42,13 @@ def process_profile(batch, plate, cell, pipeline):
     # Load and setup platemap info
     metadata_dir = pathlib.PurePath(".", "metadata", "platemaps", batch)
     barcode_plate_map_file = pathlib.PurePath(metadata_dir, "barcode_platemap.csv")
+<<<<<<< HEAD
     barcode_plate_map_df = pd.read_csv(
         barcode_plate_map_file, dtype={"Assay_Plate_Barcode": str}
     )
+=======
+    barcode_plate_map_df = pd.read_csv(barcode_plate_map_file)
+>>>>>>> 34e0447dd335c3dd9de06751e17b36d0892a6a4a
     plate_map_name = barcode_plate_map_df.query(
         "Assay_Plate_Barcode == @plate"
     ).Plate_Map_Name.values[0]
