@@ -4,6 +4,7 @@ Perform the image-based profiling pipeline to process data
 # copied from
 # https://github.com/broadinstitute/profiling-resistance-mechanisms/blob/master/0.generate-profiles/scripts/profile_util.py
 
+import os
 import pathlib
 from profile_utils import process_pipeline
 import pandas as pd
@@ -51,7 +52,7 @@ def process_profile(batch, plate, cell, pipeline):
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
 
-        sql_file = pathlib.PurePath('../../backend', batch, plate, f"{plate}.sqlite")
+        sql_file = os.path.join('../../backend', batch, plate, f"{plate}.sqlite")
 
         strata = [aggregate_plate_column, aggregate_well_column]
 
