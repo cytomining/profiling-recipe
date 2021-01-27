@@ -7,6 +7,7 @@ Perform the image-based profiling pipeline to process data
 import pathlib
 from profile_utils import process_pipeline
 import pandas as pd
+from pycytominer.aggregate import AggregateProfiles
 from pycytominer import (
     annotate,
     normalize,
@@ -21,6 +22,7 @@ def process_profile(batch, plate, cell, pipeline):
     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
 
     # Set output file information
+    aggregate_out_file = pathlib.PurePath(output_dir, f"{plate}.csv.gz")
     aggregate_output_file = pathlib.PurePath(output_dir, f"{plate}.csv.gz")
     annotate_output_file = pathlib.PurePath(output_dir, f"{plate}_augmented.csv.gz")
     normalize_output_file = pathlib.PurePath(output_dir, f"{plate}_normalized.csv.gz")
@@ -38,6 +40,34 @@ def process_profile(batch, plate, cell, pipeline):
     compression = process_pipeline(pipeline["options"], option="compression")
     float_format = process_pipeline(pipeline["options"], option="float_format")
     samples = process_pipeline(pipeline["options"], option="samples")
+
+    # Aggregate Profiles
+
+    aggregate_steps = pipeline["aggregate"]
+
+    if aggregate_steps["perform"]:
+        aggregate_features = aggregate_steps["features"]
+        aggregate_operation = aggregate_steps["method"]
+        aggregate_plate_column = aggregate_steps["plate_column"]
+        aggregate_well_column = aggregate_steps["well_column"]
+
+        sql_file = pathlib.PurePath('../../backend', batch, plate, f"{plate}.sqlite")
+
+        strata = [aggregate_plate_column, aggregate_well_column]
+
+        if "site_column" in aggregate_steps:
+            aggregate_site_column = aggregate_steps["site_column"]
+            strata += [aggregate_site_column]
+
+        if aggregate_steps["perform"]:
+            ap = AggregateProfiles(
+                sql_file,
+                strata=strata,
+                features=aggregate_features,
+                operation=aggregate_operation,
+            )
+
+            ap.aggregate_profiles(output_file=aggregate_out_file, compression=compression)
 
     # Annotate Profiles
     annotate_steps = pipeline["annotate"]
