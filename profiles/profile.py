@@ -52,7 +52,7 @@ def process_profile(batch, plate, cell, pipeline):
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
 
-        sql_file = f'sqlite:////{os.path.join("../../backend", batch, plate, f"{plate}.sqlite")}'
+        sql_file = f'sqlite:////{os.path.abspath(os.path.join("../../backend", batch, plate, f"{plate}.sqlite"))}'
 
         strata = [aggregate_plate_column, aggregate_well_column]
 
