@@ -8,7 +8,7 @@ import os
 import pathlib
 from profile_utils import process_pipeline
 import pandas as pd
-from pycytominer.aggregate import AggregateProfiles
+from pycytominer.cyto_utils.cells import SingleCells
 from pycytominer import (
     annotate,
     normalize,
@@ -47,8 +47,14 @@ def process_profile(batch, plate, cell, pipeline):
     aggregate_steps = pipeline["aggregate"]
 
     if aggregate_steps["perform"]:
-        aggregate_features = aggregate_steps["features"]
-        aggregate_operation = aggregate_steps["method"]
+        aggregate_args = {'features': aggregate_steps['features'],
+                          'operation': aggregate_steps['method']}
+
+        # aggregate_fields = aggregate_steps["fields"]
+        # aggregate_fields = list(map(int, aggregate_fields.split(',')))
+
+        aggregate_compartments = aggregate_steps["compartments"]
+
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
 
@@ -61,14 +67,42 @@ def process_profile(batch, plate, cell, pipeline):
             strata += [aggregate_site_column]
 
         if aggregate_steps["perform"]:
-            ap = AggregateProfiles(
+            ''' The following is a hack to allow aggregate to work with the new column "filteredcells". This needs to 
+            be handled better in the future versions of the recipe. 
+            '''
+            if "filteredcells" in aggregate_compartments:
+                linking_columns = {
+                    "cytoplasm": {
+                        "cells": "Cytoplasm_Parent_Cells",
+                        "nuclei": "Cytoplasm_Parent_Nuclei",
+                        "filteredcells": "Cytoplasm_Parent_FilteredCells"
+                    },
+                    "cells": {"cytoplasm": "ObjectNumber"},
+                    "nuclei": {"cytoplasm": "ObjectNumber"},
+                    "filteredcells": {"cytoplasm": "ObjectNumber"}
+                }
+            else:
+                linking_columns = {
+                    "cytoplasm": {
+                        "cells": "Cytoplasm_Parent_Cells",
+                        "nuclei": "Cytoplasm_Parent_Nuclei"
+                    },
+                    "cells": {"cytoplasm": "ObjectNumber"},
+                    "nuclei": {"cytoplasm": "ObjectNumber"}
+                }
+
+            ap = SingleCells(
                 sql_file,
                 strata=strata,
-                features=aggregate_features,
-                operation=aggregate_operation,
+                compartments=aggregate_compartments,
+                compartment_linking_cols=linking_columns
             )
 
-            ap.aggregate_profiles(output_file=aggregate_out_file, compression=compression)
+            ap.aggregate_profiles(
+                output_file=aggregate_out_file,
+                compression_options=compression,
+                aggregate_args=aggregate_args
+            )
 
     # Annotate Profiles
     annotate_steps = pipeline["annotate"]
