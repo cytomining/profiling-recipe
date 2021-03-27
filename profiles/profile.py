@@ -8,6 +8,7 @@ import os
 import pathlib
 from profile_utils import process_pipeline
 import pandas as pd
+import numpy as np
 from pycytominer.cyto_utils.cells import SingleCells
 from pycytominer import (
     annotate,
@@ -17,9 +18,10 @@ from pycytominer import (
 )
 
 
-def process_profile(batch, plate, cell, pipeline):
+def process_profile(batch, plate, pipeline):
     # Set output directory information
     pipeline_output = pipeline["output_dir"]
+    compartments = list(pipeline["compartments"].split(','))
     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
 
     # Set output file information
@@ -53,8 +55,6 @@ def process_profile(batch, plate, cell, pipeline):
         # aggregate_fields = aggregate_steps["fields"]
         # aggregate_fields = list(map(int, aggregate_fields.split(',')))
 
-        aggregate_compartments = aggregate_steps["compartments"]
-
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
 
@@ -70,7 +70,7 @@ def process_profile(batch, plate, cell, pipeline):
             ''' The following is a hack to allow aggregate to work with the new column "filteredcells". This needs to 
             be handled better in the future versions of the recipe. 
             '''
-            if "filteredcells" in aggregate_compartments:
+            if "filteredcells" in compartments:
                 linking_columns = {
                     "cytoplasm": {
                         "cells": "Cytoplasm_Parent_Cells",
@@ -94,7 +94,7 @@ def process_profile(batch, plate, cell, pipeline):
             ap = SingleCells(
                 sql_file,
                 strata=strata,
-                compartments=aggregate_compartments,
+                compartments=compartments,
                 compartment_linking_cols=linking_columns
             )
 
@@ -133,55 +133,40 @@ def process_profile(batch, plate, cell, pipeline):
                 pathlib.PurePath(".", "metadata", "moa", annotate_steps["external"]),
                 sep="\t",
             )
-            anno_df = annotate(
+            annotate(
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
-                cell_id=cell,
                 external_metadata=external_df,
                 external_join_left=["Metadata_broad_sample"],
                 external_join_right=["Metadata_broad_sample"],
+                output_file=annotate_output_file,
+                float_format=float_format,
+                compression_options=compression,
+                clean_cellprofiler=True
             )
         else:
-            anno_df = annotate(
+            annotate(
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
-                cell_id=cell,
+                output_file=annotate_output_file,
+                float_format=float_format,
+                compression_options=compression,
+                clean_cellprofiler=True
             )
-
-        anno_df = anno_df.rename(
-            {
-                "Image_Metadata_Plate": "Metadata_Plate",
-                "Image_Metadata_Well": "Metadata_Well",
-            },
-            axis="columns",
-        ).assign(
-            Metadata_Assay_Plate_Barcode=plate,
-            Metadata_Plate_Map_Name=barcode_plate_map_df.loc[
-                barcode_plate_map_df.Assay_Plate_Barcode == plate, "Plate_Map_Name"
-            ].values[0],
-        )
-
-        # Reoroder columns
-        metadata_cols = cyto_utils.infer_cp_features(anno_df, metadata=True)
-        cp_cols = cyto_utils.infer_cp_features(anno_df)
-        reindex_cols = metadata_cols + cp_cols
-        anno_df = anno_df.reindex(reindex_cols, axis="columns")
-
-        # Output annotated file
-        cyto_utils.output(
-            df=anno_df,
-            output_filename=annotate_output_file,
-            float_format=float_format,
-            compression=compression,
-        )
 
     # Normalize Profiles
     normalize_steps = pipeline["normalize"]
     if normalize_steps["perform"]:
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
+
+        if normalization_features == 'infer':
+            if len(np.intersect1d(compartments, ['cells', 'cytoplasm', 'nuclei'])) < len(compartments):
+                normalization_features = cyto_utils.infer_cp_features(pd.read_csv(annotate_output_file),
+                                                                      compartments=compartments)
+
         normalize(
             profiles=annotate_output_file,
             features=normalization_features,
@@ -189,7 +174,7 @@ def process_profile(batch, plate, cell, pipeline):
             method=normalization_method,
             output_file=normalize_output_file,
             float_format=float_format,
-            compression=compression,
+            compression_options=compression,
         )
         if normalize_steps["negcon"]:
             normalize(
@@ -199,7 +184,7 @@ def process_profile(batch, plate, cell, pipeline):
                 method=normalization_method,
                 output_file=normalize_output_negcon_file,
                 float_format=float_format,
-                compression=compression,
+                compression_options=compression,
             )
 
     # Apply feature selection
@@ -207,13 +192,19 @@ def process_profile(batch, plate, cell, pipeline):
     if feature_select_steps["perform"]:
         feature_select_operations = feature_select_steps["operations"]
         feature_select_features = feature_select_steps["features"]
+
+        if feature_select_features == 'infer':
+            if len(np.intersect1d(compartments, ['cells', 'cytoplasm', 'nuclei'])) < len(compartments):
+                feature_select_features = cyto_utils.infer_cp_features(pd.read_csv(normalize_output_file),
+                                                                       compartments=compartments)
+
         feature_select(
             profiles=normalize_output_file,
             features=feature_select_features,
             operation=feature_select_operations,
             output_file=feature_output_file,
             float_format=float_format,
-            compression=compression,
+            compression_options=compression,
         )
         if feature_select_steps["negcon"]:
             feature_select(
@@ -222,5 +213,5 @@ def process_profile(batch, plate, cell, pipeline):
                 operation=feature_select_operations,
                 output_file=feature_output_negcon_file,
                 float_format=float_format,
-                compression=compression,
+                compression_options=compression,
             )

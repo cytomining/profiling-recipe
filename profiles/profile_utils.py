@@ -16,7 +16,7 @@ def load_pipeline(config_file):
                     continue
                 batch = data["batch"]
                 plates = [
-                    [str(x["name"]), str(x["cell"])]
+                    str(x["name"])
                     for x in data["plates"]
                     if x["process"]
                 ]
