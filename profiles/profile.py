@@ -21,7 +21,7 @@ from pycytominer import (
 def process_profile(batch, plate, pipeline):
     # Set output directory information
     pipeline_output = pipeline["output_dir"]
-    compartments = list(pipeline["compartments"].split(','))
+    compartments = list(pipeline["compartments"].split(","))
     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
 
     # Set output file information
@@ -49,8 +49,10 @@ def process_profile(batch, plate, pipeline):
     aggregate_steps = pipeline["aggregate"]
 
     if aggregate_steps["perform"]:
-        aggregate_args = {'features': aggregate_steps['features'],
-                          'operation': aggregate_steps['method']}
+        aggregate_args = {
+            "features": aggregate_steps["features"],
+            "operation": aggregate_steps["method"],
+        }
 
         # aggregate_fields = aggregate_steps["fields"]
         # aggregate_fields = list(map(int, aggregate_fields.split(',')))
@@ -67,41 +69,41 @@ def process_profile(batch, plate, pipeline):
             strata += [aggregate_site_column]
 
         if aggregate_steps["perform"]:
-            ''' The following is a hack to allow aggregate to work with the new column "filteredcells". This needs to 
-            be handled better in the future versions of the recipe. 
-            '''
+            """The following is a hack to allow aggregate to work with the new column "filteredcells". This needs to
+            be handled better in the future versions of the recipe.
+            """
             if "filteredcells" in compartments:
                 linking_columns = {
                     "cytoplasm": {
                         "cells": "Cytoplasm_Parent_Cells",
                         "nuclei": "Cytoplasm_Parent_Nuclei",
-                        "filteredcells": "Cytoplasm_Parent_FilteredCells"
+                        "filteredcells": "Cytoplasm_Parent_FilteredCells",
                     },
                     "cells": {"cytoplasm": "ObjectNumber"},
                     "nuclei": {"cytoplasm": "ObjectNumber"},
-                    "filteredcells": {"cytoplasm": "ObjectNumber"}
+                    "filteredcells": {"cytoplasm": "ObjectNumber"},
                 }
             else:
                 linking_columns = {
                     "cytoplasm": {
                         "cells": "Cytoplasm_Parent_Cells",
-                        "nuclei": "Cytoplasm_Parent_Nuclei"
+                        "nuclei": "Cytoplasm_Parent_Nuclei",
                     },
                     "cells": {"cytoplasm": "ObjectNumber"},
-                    "nuclei": {"cytoplasm": "ObjectNumber"}
+                    "nuclei": {"cytoplasm": "ObjectNumber"},
                 }
 
             ap = SingleCells(
                 sql_file,
                 strata=strata,
                 compartments=compartments,
-                compartment_linking_cols=linking_columns
+                compartment_linking_cols=linking_columns,
             )
 
             ap.aggregate_profiles(
                 output_file=aggregate_out_file,
                 compression_options=compression,
-                aggregate_args=aggregate_args
+                aggregate_args=aggregate_args,
             )
 
     # Annotate Profiles
@@ -120,7 +122,9 @@ def process_profile(batch, plate, pipeline):
         plate_map_name = barcode_plate_map_df.query(
             "Assay_Plate_Barcode == @plate"
         ).Plate_Map_Name.values[0]
-        plate_map_file = pathlib.PurePath(metadata_dir, "platemap", f"{plate_map_name}.txt")
+        plate_map_file = pathlib.PurePath(
+            metadata_dir, "platemap", f"{plate_map_name}.txt"
+        )
         plate_map_df = pd.read_csv(plate_map_file, sep="\t")
         plate_map_df.columns = [
             f"Metadata_{x}" if not x.startswith("Metadata_") else x
@@ -143,7 +147,7 @@ def process_profile(batch, plate, pipeline):
                 output_file=annotate_output_file,
                 float_format=float_format,
                 compression_options=compression,
-                clean_cellprofiler=True
+                clean_cellprofiler=True,
             )
         else:
             annotate(
@@ -153,7 +157,7 @@ def process_profile(batch, plate, pipeline):
                 output_file=annotate_output_file,
                 float_format=float_format,
                 compression_options=compression,
-                clean_cellprofiler=True
+                clean_cellprofiler=True,
             )
 
     # Normalize Profiles
@@ -162,10 +166,13 @@ def process_profile(batch, plate, pipeline):
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
 
-        if normalization_features == 'infer':
-            if len(np.intersect1d(compartments, ['cells', 'cytoplasm', 'nuclei'])) < len(compartments):
-                normalization_features = cyto_utils.infer_cp_features(pd.read_csv(annotate_output_file),
-                                                                      compartments=compartments)
+        if normalization_features == "infer":
+            if len(
+                np.intersect1d(compartments, ["cells", "cytoplasm", "nuclei"])
+            ) < len(compartments):
+                normalization_features = cyto_utils.infer_cp_features(
+                    pd.read_csv(annotate_output_file), compartments=compartments
+                )
 
         normalize(
             profiles=annotate_output_file,
@@ -193,10 +200,13 @@ def process_profile(batch, plate, pipeline):
         feature_select_operations = feature_select_steps["operations"]
         feature_select_features = feature_select_steps["features"]
 
-        if feature_select_features == 'infer':
-            if len(np.intersect1d(compartments, ['cells', 'cytoplasm', 'nuclei'])) < len(compartments):
-                feature_select_features = cyto_utils.infer_cp_features(pd.read_csv(normalize_output_file),
-                                                                       compartments=compartments)
+        if feature_select_features == "infer":
+            if len(
+                np.intersect1d(compartments, ["cells", "cytoplasm", "nuclei"])
+            ) < len(compartments):
+                feature_select_features = cyto_utils.infer_cp_features(
+                    pd.read_csv(normalize_output_file), compartments=compartments
+                )
 
         feature_select(
             profiles=normalize_output_file,
