@@ -1,4 +1,4 @@
-name: test-profiling
+name: profiling
 channels:
 - conda-forge
 dependencies:
@@ -8,4 +8,4 @@ dependencies:
 - conda-forge::pyyaml=5.3.1
 - pip
 - pip:
-  - git+https://github.com/cytomining/pycytominer@838ac2eee8bee09b50a1ec8077201c01f7882c69
+  - git+https://github.com/cytomining/pycytominer@388bc35cdc044da8f2bdcbd8edbfa2bf66cf1198
