@@ -44,6 +44,15 @@ def process_profile(batch, plate, pipeline):
     float_format = process_pipeline(pipeline["options"], option="float_format")
     samples = process_pipeline(pipeline["options"], option="samples")
 
+    # Check for noncanonical compartments
+    canonical_compartments = ["cells", "cytoplasm", "nuclei"]
+    noncanonical = False
+    noncanonical_compartments = []
+
+    if not all(np.isin(compartments, canonical_compartments)):
+        noncanonical_compartments = list(np.asarray(compartments)[~np.isin(compartments, canonical_compartments)])
+        noncanonical = True
+
     # Aggregate Profiles
 
     aggregate_steps = pipeline["aggregate"]
@@ -54,8 +63,16 @@ def process_profile(batch, plate, pipeline):
             "operation": aggregate_steps["method"],
         }
 
-        # aggregate_fields = aggregate_steps["fields"]
-        # aggregate_fields = list(map(int, aggregate_fields.split(',')))
+        linking_columns = {
+            "cytoplasm": {
+                "cells": "Cytoplasm_Parent_Cells",
+                "nuclei": "Cytoplasm_Parent_Nuclei",
+            },
+            "cells": {"cytoplasm": "ObjectNumber"},
+            "nuclei": {"cytoplasm": "ObjectNumber"},
+        }
+
+        aggregate_fields = "all"
 
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
@@ -64,47 +81,32 @@ def process_profile(batch, plate, pipeline):
 
         strata = [aggregate_plate_column, aggregate_well_column]
 
+        if "fields" in aggregate_steps:
+            aggregate_fields = aggregate_steps["fields"]
+            aggregate_fields = list(map(int, aggregate_fields.split(',')))
+
         if "site_column" in aggregate_steps:
             aggregate_site_column = aggregate_steps["site_column"]
             strata += [aggregate_site_column]
 
-        if aggregate_steps["perform"]:
-            """The following is a hack to allow aggregate to work with the new column "filteredcells". This needs to
-            be handled better in the future versions of the recipe.
-            """
-            if "filteredcells" in compartments:
-                linking_columns = {
-                    "cytoplasm": {
-                        "cells": "Cytoplasm_Parent_Cells",
-                        "nuclei": "Cytoplasm_Parent_Nuclei",
-                        "filteredcells": "Cytoplasm_Parent_FilteredCells",
-                    },
-                    "cells": {"cytoplasm": "ObjectNumber"},
-                    "nuclei": {"cytoplasm": "ObjectNumber"},
-                    "filteredcells": {"cytoplasm": "ObjectNumber"},
-                }
-            else:
-                linking_columns = {
-                    "cytoplasm": {
-                        "cells": "Cytoplasm_Parent_Cells",
-                        "nuclei": "Cytoplasm_Parent_Nuclei",
-                    },
-                    "cells": {"cytoplasm": "ObjectNumber"},
-                    "nuclei": {"cytoplasm": "ObjectNumber"},
-                }
+        if noncanonical:
+            for comp in noncanonical_compartments:
+                linking_columns[comp] = {"cytoplasm": "ObjectNumber"}
+                linking_columns["cytoplasm"][comp] = f'Cytoplasm_Parent_{comp.capitalize()}'  # This will not work if the feature name uses CamelCase.
 
-            ap = SingleCells(
-                sql_file,
-                strata=strata,
-                compartments=compartments,
-                compartment_linking_cols=linking_columns,
-            )
+        ap = SingleCells(
+            sql_file,
+            strata=strata,
+            compartments=compartments,
+            compartment_linking_cols=linking_columns,
+            fields_of_view=aggregate_fields,
+        )
 
-            ap.aggregate_profiles(
-                output_file=aggregate_out_file,
-                compression_options=compression,
-                aggregate_args=aggregate_args,
-            )
+        ap.aggregate_profiles(
+            output_file=aggregate_out_file,
+            compression_options=compression,
+            aggregate_args=aggregate_args,
+        )
 
     # Annotate Profiles
     annotate_steps = pipeline["annotate"]
@@ -166,13 +168,11 @@ def process_profile(batch, plate, pipeline):
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
 
-        if normalization_features == "infer":
-            if len(
-                np.intersect1d(compartments, ["cells", "cytoplasm", "nuclei"])
-            ) < len(compartments):
-                normalization_features = cyto_utils.infer_cp_features(
-                    pd.read_csv(annotate_output_file), compartments=compartments
-                )
+        if normalization_features == "infer" and noncanonical:
+            normalization_features = cyto_utils.infer_cp_features(
+                pd.read_csv(annotate_output_file), compartments=compartments
+            )
+
 
         normalize(
             profiles=annotate_output_file,
@@ -200,13 +200,10 @@ def process_profile(batch, plate, pipeline):
         feature_select_operations = feature_select_steps["operations"]
         feature_select_features = feature_select_steps["features"]
 
-        if feature_select_features == "infer":
-            if len(
-                np.intersect1d(compartments, ["cells", "cytoplasm", "nuclei"])
-            ) < len(compartments):
-                feature_select_features = cyto_utils.infer_cp_features(
-                    pd.read_csv(normalize_output_file), compartments=compartments
-                )
+        if feature_select_features == "infer" and noncanonical:
+            feature_select_features = cyto_utils.infer_cp_features(
+                pd.read_csv(normalize_output_file), compartments=compartments
+            )
 
         feature_select(
             profiles=normalize_output_file,
