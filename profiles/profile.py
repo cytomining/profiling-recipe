@@ -50,7 +50,9 @@ def process_profile(batch, plate, pipeline):
     noncanonical_compartments = []
 
     if not all(np.isin(compartments, canonical_compartments)):
-        noncanonical_compartments = list(np.asarray(compartments)[~np.isin(compartments, canonical_compartments)])
+        noncanonical_compartments = list(
+            np.asarray(compartments)[~np.isin(compartments, canonical_compartments)]
+        )
         noncanonical = True
 
     # Aggregate Profiles
@@ -83,7 +85,7 @@ def process_profile(batch, plate, pipeline):
 
         if "fields" in aggregate_steps:
             aggregate_fields = aggregate_steps["fields"]
-            aggregate_fields = list(map(int, aggregate_fields.split(',')))
+            aggregate_fields = list(map(int, aggregate_fields.split(",")))
 
         if "site_column" in aggregate_steps:
             aggregate_site_column = aggregate_steps["site_column"]
@@ -92,7 +94,14 @@ def process_profile(batch, plate, pipeline):
         if noncanonical:
             for comp in noncanonical_compartments:
                 linking_columns[comp] = {"cytoplasm": "ObjectNumber"}
-                linking_columns["cytoplasm"][comp] = f'Cytoplasm_Parent_{comp.capitalize()}'  # This will not work if the feature name uses CamelCase.
+                linking_columns["cytoplasm"][
+                    comp
+                ] = f"Cytoplasm_Parent_{comp.capitalize()}"  # This will not work if the feature name uses CamelCase.
+
+        if "object_feature" in aggregate_steps:
+            object_feature = aggregate_steps["object_feature"]
+        else:
+            object_feature = "ObjectNumber"
 
         ap = SingleCells(
             sql_file,
@@ -100,6 +109,7 @@ def process_profile(batch, plate, pipeline):
             compartments=compartments,
             compartment_linking_cols=linking_columns,
             fields_of_view=aggregate_fields,
+            object_feature=object_feature,
         )
 
         ap.aggregate_profiles(
@@ -172,7 +182,6 @@ def process_profile(batch, plate, pipeline):
             normalization_features = cyto_utils.infer_cp_features(
                 pd.read_csv(annotate_output_file), compartments=compartments
             )
-
 
         normalize(
             profiles=annotate_output_file,
