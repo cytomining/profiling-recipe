@@ -8,7 +8,8 @@ import os
 import pathlib
 from profile_utils import process_pipeline
 import pandas as pd
-from pycytominer.aggregate import AggregateProfiles
+import numpy as np
+from pycytominer.cyto_utils.cells import SingleCells
 from pycytominer import (
     annotate,
     normalize,
@@ -17,9 +18,10 @@ from pycytominer import (
 )
 
 
-def process_profile(batch, plate, cell, pipeline):
+def process_profile(batch, plate, pipeline):
     # Set output directory information
     pipeline_output = pipeline["output_dir"]
+    compartments = list(pipeline["compartments"].split(","))
     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
 
     # Set output file information
@@ -30,25 +32,44 @@ def process_profile(batch, plate, cell, pipeline):
     normalize_output_negcon_file = pathlib.PurePath(
         output_dir, f"{plate}_normalized_negcon.csv.gz"
     )
-    feature_output_file = pathlib.PurePath(
-        output_dir, f"{plate}_normalized_feature_select.csv.gz"
-    )
-    feature_output_negcon_file = pathlib.PurePath(
-        output_dir, f"{plate}_normalized_feature_select_negcon.csv.gz"
-    )
 
     # Load pipeline options
     compression = process_pipeline(pipeline["options"], option="compression")
     float_format = process_pipeline(pipeline["options"], option="float_format")
     samples = process_pipeline(pipeline["options"], option="samples")
 
+    # Check for noncanonical compartments
+    canonical_compartments = ["cells", "cytoplasm", "nuclei"]
+    noncanonical = False
+    noncanonical_compartments = []
+
+    if not all(np.isin(compartments, canonical_compartments)):
+        noncanonical_compartments = list(
+            np.asarray(compartments)[~np.isin(compartments, canonical_compartments)]
+        )
+        noncanonical = True
+
     # Aggregate Profiles
 
     aggregate_steps = pipeline["aggregate"]
 
     if aggregate_steps["perform"]:
-        aggregate_features = aggregate_steps["features"]
-        aggregate_operation = aggregate_steps["method"]
+        aggregate_args = {
+            "features": aggregate_steps["features"],
+            "operation": aggregate_steps["method"],
+        }
+
+        linking_columns = {
+            "cytoplasm": {
+                "cells": "Cytoplasm_Parent_Cells",
+                "nuclei": "Cytoplasm_Parent_Nuclei",
+            },
+            "cells": {"cytoplasm": "ObjectNumber"},
+            "nuclei": {"cytoplasm": "ObjectNumber"},
+        }
+
+        aggregate_fields = "all"
+
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
 
@@ -56,19 +77,40 @@ def process_profile(batch, plate, cell, pipeline):
 
         strata = [aggregate_plate_column, aggregate_well_column]
 
+        if "fields" in aggregate_steps:
+            aggregate_fields = aggregate_steps["fields"]
+            aggregate_fields = list(map(int, aggregate_fields.split(",")))
+
         if "site_column" in aggregate_steps:
             aggregate_site_column = aggregate_steps["site_column"]
             strata += [aggregate_site_column]
 
-        if aggregate_steps["perform"]:
-            ap = AggregateProfiles(
-                sql_file,
-                strata=strata,
-                features=aggregate_features,
-                operation=aggregate_operation,
-            )
+        if noncanonical:
+            for comp in noncanonical_compartments:
+                linking_columns[comp] = {"cytoplasm": "ObjectNumber"}
+                linking_columns["cytoplasm"][
+                    comp
+                ] = f"Cytoplasm_Parent_{comp.capitalize()}"  # This will not work if the feature name uses CamelCase.
 
-            ap.aggregate_profiles(output_file=aggregate_out_file, compression=compression)
+        if "object_feature" in aggregate_steps:
+            object_feature = aggregate_steps["object_feature"]
+        else:
+            object_feature = "ObjectNumber"
+
+        ap = SingleCells(
+            sql_file,
+            strata=strata,
+            compartments=compartments,
+            compartment_linking_cols=linking_columns,
+            fields_of_view=aggregate_fields,
+            object_feature=object_feature,
+        )
+
+        ap.aggregate_profiles(
+            output_file=aggregate_out_file,
+            compression_options=compression,
+            aggregate_args=aggregate_args,
+        )
 
     # Annotate Profiles
     annotate_steps = pipeline["annotate"]
@@ -86,7 +128,9 @@ def process_profile(batch, plate, cell, pipeline):
         plate_map_name = barcode_plate_map_df.query(
             "Assay_Plate_Barcode == @plate"
         ).Plate_Map_Name.values[0]
-        plate_map_file = pathlib.PurePath(metadata_dir, "platemap", f"{plate_map_name}.txt")
+        plate_map_file = pathlib.PurePath(
+            metadata_dir, "platemap", f"{plate_map_name}.txt"
+        )
         plate_map_df = pd.read_csv(plate_map_file, sep="\t")
         plate_map_df.columns = [
             f"Metadata_{x}" if not x.startswith("Metadata_") else x
@@ -99,55 +143,40 @@ def process_profile(batch, plate, cell, pipeline):
                 pathlib.PurePath(".", "metadata", "moa", annotate_steps["external"]),
                 sep="\t",
             )
-            anno_df = annotate(
+            annotate(
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
-                cell_id=cell,
                 external_metadata=external_df,
                 external_join_left=["Metadata_broad_sample"],
                 external_join_right=["Metadata_broad_sample"],
+                output_file=annotate_output_file,
+                float_format=float_format,
+                compression_options=compression,
+                clean_cellprofiler=True,
             )
         else:
-            anno_df = annotate(
+            annotate(
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
-                cell_id=cell,
+                output_file=annotate_output_file,
+                float_format=float_format,
+                compression_options=compression,
+                clean_cellprofiler=True,
             )
-
-        anno_df = anno_df.rename(
-            {
-                "Image_Metadata_Plate": "Metadata_Plate",
-                "Image_Metadata_Well": "Metadata_Well",
-            },
-            axis="columns",
-        ).assign(
-            Metadata_Assay_Plate_Barcode=plate,
-            Metadata_Plate_Map_Name=barcode_plate_map_df.loc[
-                barcode_plate_map_df.Assay_Plate_Barcode == plate, "Plate_Map_Name"
-            ].values[0],
-        )
-
-        # Reoroder columns
-        metadata_cols = cyto_utils.infer_cp_features(anno_df, metadata=True)
-        cp_cols = cyto_utils.infer_cp_features(anno_df)
-        reindex_cols = metadata_cols + cp_cols
-        anno_df = anno_df.reindex(reindex_cols, axis="columns")
-
-        # Output annotated file
-        cyto_utils.output(
-            df=anno_df,
-            output_filename=annotate_output_file,
-            float_format=float_format,
-            compression=compression,
-        )
 
     # Normalize Profiles
     normalize_steps = pipeline["normalize"]
     if normalize_steps["perform"]:
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
+
+        if normalization_features == "infer" and noncanonical:
+            normalization_features = cyto_utils.infer_cp_features(
+                pd.read_csv(annotate_output_file), compartments=compartments
+            )
+
         normalize(
             profiles=annotate_output_file,
             features=normalization_features,
@@ -155,7 +184,7 @@ def process_profile(batch, plate, cell, pipeline):
             method=normalization_method,
             output_file=normalize_output_file,
             float_format=float_format,
-            compression=compression,
+            compression_options=compression,
         )
         if normalize_steps["negcon"]:
             normalize(
@@ -165,28 +194,112 @@ def process_profile(batch, plate, cell, pipeline):
                 method=normalization_method,
                 output_file=normalize_output_negcon_file,
                 float_format=float_format,
-                compression=compression,
+                compression_options=compression,
             )
 
-    # Apply feature selection
+
+def feature_selection(batch, plates, pipeline):
+    pipeline_output = pipeline["output_dir"]
+    compartments = list(pipeline["compartments"].split(","))
     feature_select_steps = pipeline["feature_select"]
-    if feature_select_steps["perform"]:
-        feature_select_operations = feature_select_steps["operations"]
-        feature_select_features = feature_select_steps["features"]
-        feature_select(
-            profiles=normalize_output_file,
+    feature_select_operations = feature_select_steps["operations"]
+    feature_select_features = feature_select_steps["features"]
+
+    # Load pipeline options
+    compression = process_pipeline(pipeline["options"], option="compression")
+    float_format = process_pipeline(pipeline["options"], option="float_format")
+    samples = process_pipeline(pipeline["options"], option="samples")
+
+    # Check for noncanonical compartments
+    canonical_compartments = ["cells", "cytoplasm", "nuclei"]
+    noncanonical = False
+    noncanonical_compartments = []
+
+    if not all(np.isin(compartments, canonical_compartments)):
+        noncanonical_compartments = list(
+            np.asarray(compartments)[~np.isin(compartments, canonical_compartments)]
+        )
+        noncanonical = True
+
+    feature_select_input_df = pd.DataFrame()
+
+    for plate in plates:
+        input_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
+        normalize_output_file = pathlib.PurePath(
+            input_dir, f"{plate}_normalized.csv.gz"
+        )
+        df = pd.read_csv(normalize_output_file)
+
+        if feature_select_input_df.shape[0] == 0:
+            feature_select_input_df = df.copy()
+        else:
+            frames = [feature_select_input_df, df]
+            feature_select_input_df = pd.concat(frames, ignore_index=True, join="inner")
+
+    if feature_select_features == "infer" and noncanonical:
+        feature_select_features = cyto_utils.infer_cp_features(
+            pd.read_csv(normalize_output_file), compartments=compartments
+        )
+
+    feature_select_output_df = feature_select(
+        profiles=feature_select_input_df,
+        features=feature_select_features,
+        operation=feature_select_operations,
+        float_format=float_format,
+        compression_options=compression,
+    )
+
+    if feature_select_steps["negcon"]:
+        feature_select_negcon_input_df = pd.DataFrame()
+
+        for plate in plates:
+            input_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
+            normalize_output_file = pathlib.PurePath(
+                input_dir, f"{plate}_normalized_negcon.csv.gz"
+            )
+            df = pd.read_csv(normalize_output_file)
+
+            if feature_select_negcon_input_df.shape[0] == 0:
+                feature_select_negcon_input_df = df.copy()
+            else:
+                frames = [feature_select_negcon_input_df, df]
+                feature_select_negcon_input_df = pd.concat(
+                    frames, ignore_index=True, join="inner"
+                )
+
+        feature_select_negcon_output_df = feature_select(
+            profiles=feature_select_negcon_input_df,
             features=feature_select_features,
             operation=feature_select_operations,
-            output_file=feature_output_file,
             float_format=float_format,
-            compression=compression,
+            compression_options=compression,
         )
+
+    for plate in plates:
+        output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
+        feature_output_file = pathlib.PurePath(
+            output_dir, f"{plate}_normalized_feature_select.csv.gz"
+        )
+
+        df_to_write = feature_select_output_df.query("Metadata_Plate==@plate")
+        cyto_utils.output(
+            output_filename=feature_output_file,
+            df=df_to_write,
+            float_format=float_format,
+            compression_options=compression,
+        )
+
         if feature_select_steps["negcon"]:
-            feature_select(
-                profiles=normalize_output_negcon_file,
-                features=feature_select_features,
-                operation=feature_select_operations,
-                output_file=feature_output_negcon_file,
+            feature_output_negcon_file = pathlib.PurePath(
+                output_dir, f"{plate}_normalized_feature_select_negcon.csv.gz"
+            )
+
+            df_to_write = feature_select_negcon_output_df.query(
+                "Metadata_Plate==@plate"
+            )
+            cyto_utils.output(
+                output_filename=feature_output_negcon_file,
+                df=df_to_write,
                 float_format=float_format,
-                compression=compression,
+                compression_options=compression,
             )
