@@ -7,7 +7,7 @@ Perform the profiling pipeline (defined in profile.py).
 
 import pathlib
 from profile_utils import load_pipeline
-from profile import process_profile
+from profile import process_profile, feature_selection
 import argparse
 
 parser = argparse.ArgumentParser(description="Run the profiling pipeline")
@@ -21,3 +21,7 @@ for batch in profile_config:
     for plate in profile_config[batch]:
         print(f"Now processing... batch: {batch}, plate: {plate}")
         process_profile(batch=batch, plate=plate, pipeline=pipeline)
+
+    if pipeline["feature_select"]["perform"]:
+        print(f"Performing feature selection for batch: {batch}")
+        feature_selection(batch=batch, plates=profile_config[batch], pipeline=pipeline)
