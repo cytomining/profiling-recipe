@@ -19,8 +19,9 @@ pipeline, profile_config = load_pipeline(args.config)
 
 for batch in profile_config:
     for plate in profile_config[batch]:
-        print(f"Now processing... batch: {batch}, plate: {plate}")
-        process_profile(batch=batch, plate=plate, pipeline=pipeline)
+        if pipeline["aggregate"]["perform"] or pipeline["annotate"]["perform"] or pipeline["normalize"]["perform"]:
+            print(f"Now processing... batch: {batch}, plate: {plate}")
+            process_profile(batch=batch, plate=plate, pipeline=pipeline)
 
     if pipeline["feature_select"]["perform"]:
         print(f"Performing feature selection for batch: {batch}")
