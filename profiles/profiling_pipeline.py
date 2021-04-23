@@ -19,7 +19,11 @@ pipeline, profile_config = load_pipeline(args.config)
 
 for batch in profile_config:
     for plate in profile_config[batch]:
-        if pipeline["aggregate"]["perform"] or pipeline["annotate"]["perform"] or pipeline["normalize"]["perform"]:
+        if (
+            pipeline["aggregate"]["perform"]
+            or pipeline["annotate"]["perform"]
+            or pipeline["normalize"]["perform"]
+        ):
             print(f"Now processing... batch: {batch}, plate: {plate}")
             process_profile(batch=batch, plate=plate, pipeline=pipeline)
 
