@@ -79,7 +79,9 @@ def process_profile(batch, plate, pipeline):
 
         if "fields" in aggregate_steps:
             aggregate_fields = aggregate_steps["fields"]
-            if not type(aggregate_fields) == int:
+            if type(aggregate_fields) == int:
+                aggregate_fields = [aggregate_fields]
+            else:
                 aggregate_fields = list(map(int, aggregate_fields.split(",")))
 
         if "site_column" in aggregate_steps:
