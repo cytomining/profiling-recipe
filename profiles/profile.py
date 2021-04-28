@@ -38,6 +38,14 @@ def process_profile(batch, plate, pipeline):
     float_format = process_pipeline(pipeline["options"], option="float_format")
     samples = process_pipeline(pipeline["options"], option="samples")
 
+    # Create folders
+
+    if not os.path.isdir(pathlib.PurePath(".", pipeline_output, batch)):
+        os.mkdir(pathlib.PurePath(".", pipeline_output, batch))
+
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
     # Check for noncanonical compartments
     canonical_compartments = ["cells", "cytoplasm", "nuclei"]
     noncanonical = False
