@@ -1,0 +1,49 @@
+---
+pipeline: <PIPELINE NAME>
+output_dir: profiles
+platemap_well_column: Metadata_well_position
+compartments: cells,cytoplasm,nuclei
+aggregate:
+  perform: true
+  plate_column: Metadata_Plate
+  well_column: Metadata_Well
+  method: median
+  features: infer
+annotate:
+  perform: true
+  well_column: Metadata_Well
+  external : <OPTIONAL METADATA TSV>
+normalize:
+  perform: true
+  method: mad_robustize
+  features: infer
+  negcon: true
+feature_select:
+  perform: true
+  features: infer
+  negcon: true
+  operations:
+    - variance_threshold
+    - correlation_threshold
+    - drop_na_columns
+    - blocklist
+options:
+  compression: gzip
+  float_format: "%.5g"
+  samples: all
+---
+batch: <FIRST BATCH NAME>
+plates:
+  - name: <FIRST PLATE NAME>
+    process: true
+  - name: <SECOND PLATE NAME>
+    process: true
+process: true
+---
+batch: <SECOND BATCH NAME>
+plates:
+  - name: <FIRST PLATE NAME>
+    process: true
+  - name: <SECOND PLATE NAME>
+    process: true
+process: true
