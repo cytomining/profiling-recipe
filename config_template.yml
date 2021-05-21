@@ -17,11 +17,11 @@ normalize:
   perform: true
   method: mad_robustize
   features: infer
-  negcon: true
+  negcon: false
 feature_select:
   perform: true
   features: infer
-  negcon: true
+  negcon: false
   operations:
     - variance_threshold
     - correlation_threshold
