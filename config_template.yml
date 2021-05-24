@@ -21,7 +21,16 @@ normalize:
 feature_select:
   perform: true
   features: infer
-  negcon: false
+  level: batch
+  operations:
+    - variance_threshold
+    - correlation_threshold
+    - drop_na_columns
+    - blocklist
+feature_select_negcon:
+  perform: true
+  features: infer
+  level: batch
   operations:
     - variance_threshold
     - correlation_threshold
