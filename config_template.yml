@@ -17,7 +17,10 @@ normalize:
   perform: true
   method: mad_robustize
   features: infer
-  negcon: false
+normalize_negcon:
+  perform: true
+  method: mad_robustize
+  features: infer
 feature_select:
   perform: true
   features: infer
