@@ -9,6 +9,7 @@ mkdir -p metadata
 mkdir -p pipelines
 mkdir -p profiles
 mkdir -p single_cell
+mkdir -p config_files
 
 echo "# Audits" >> audit/README.md
 echo "# Batchfiles" >> batchfiles/README.md
@@ -18,3 +19,4 @@ echo "# Metadata" >> metadata/README.md
 echo "# Pipelines" >> pipelines/README.md
 echo "# Profiles" >> profiles/README.md
 echo "# Single-cell data" >> single_cell/README.md
+echo '# Config files' >> config_files/README.md
