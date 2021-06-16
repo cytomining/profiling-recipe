@@ -55,11 +55,6 @@ class RunPipeline(object):
             self.noncanonical, self.noncanonical_compartments
         )
 
-        aggregate_args = {
-            "features": aggregate_steps["features"],
-            "operation": aggregate_steps["method"],
-        }
-
         aggregate_plate_column = aggregate_steps["plate_column"]
         aggregate_well_column = aggregate_steps["well_column"]
         strata = [aggregate_plate_column, aggregate_well_column]
@@ -88,6 +83,7 @@ class RunPipeline(object):
             strata=strata,
             compartments=self.compartments,
             compartment_linking_cols=linking_columns,
+            aggregation_operation=aggregate_steps["method"],
             fields_of_view=aggregate_fields,
             object_feature=object_feature,
         )
@@ -96,7 +92,6 @@ class RunPipeline(object):
             output_file=aggregate_output_file,
             compression_options=self.pipeline_options["compression"],
             float_format=self.pipeline_options["float_format"],
-            aggregate_args=aggregate_args,
         )
 
     def pipeline_annotate(self, batch, plate):

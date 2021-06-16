@@ -8,7 +8,6 @@ aggregate:
   plate_column: Metadata_Plate
   well_column: Metadata_Well
   method: median
-  features: infer
 annotate:
   perform: true
   well_column: Metadata_Well
