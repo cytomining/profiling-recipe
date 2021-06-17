@@ -340,7 +340,7 @@ class RunPipeline(object):
                                                   'Plate_Name': plate,
                                                   'Well_Count': site_df.count(),
                                                   'Images_per_site': image_count,
-                                                  'Sites_per_well_Median': site_df.median(),
+                                                  'Sites_per_well_Median': '%.3f' % site_df.median(),
                                                   'Sites_per_well_mad': site_df.mad()}, ignore_index=True)
 
                 summary['Well_Count'] = summary['Well_Count'].astype(int)
