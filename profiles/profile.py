@@ -348,7 +348,7 @@ class RunPipeline(object):
                 summary['Sites_per_well_Median'] = summary['Sites_per_well_Median'].astype(int)
 
                 summary = (
-                    summary.drop_duplicates(subset=['Batch_Name', 'Plate_Name'])
+                    summary.drop_duplicates(subset=['Batch_Name', 'Plate_Name'], keep="last")
                     .sort_values(by=['Batch_Name', 'Plate_Name'])
                 )
 
