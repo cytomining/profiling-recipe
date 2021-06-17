@@ -406,7 +406,7 @@ class RunPipeline(object):
 
                         corr_matrix_df = pd.DataFrame(corr_matrix, columns=list(df.Metadata_Well), index=list(df.Metadata_Well))
 
-                        fig = px.imshow(corr_matrix_df, color_continuous_scale='rdbu')
+                        fig = px.imshow(corr_matrix_df, color_continuous_scale='BlueRed')
                         fig.update_layout(title=f'Plate: {plate}, Correlation all vs. all',
                                           xaxis=dict(title='Wells'),
                                           yaxis=dict(title='Wells'))
