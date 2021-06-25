@@ -8,7 +8,6 @@ aggregate:
   plate_column: Metadata_Plate
   well_column: Metadata_Well
   method: median
-  features: infer
 annotate:
   perform: true
   well_column: Metadata_Well
@@ -24,7 +23,7 @@ normalize_negcon:
 feature_select:
   perform: true
   features: infer
-  level: batch
+  level: plate
   operations:
     - variance_threshold
     - correlation_threshold
@@ -33,12 +32,17 @@ feature_select:
 feature_select_negcon:
   perform: true
   features: infer
-  level: batch
+  level: plate
   operations:
     - variance_threshold
     - correlation_threshold
     - drop_na_columns
     - blocklist
+quality_control:
+  perform: true
+  operations:
+    - summary
+    - heatmap
 options:
   compression: gzip
   float_format: "%.5g"
