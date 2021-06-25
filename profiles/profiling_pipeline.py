@@ -64,3 +64,8 @@ if "feature_select_negcon" in pipeline:
         run_pipeline.pipeline_feature_select(
             steps=pipeline["feature_select_negcon"], suffix="negcon"
         )
+
+if "quality_control" in pipeline:
+    if pipeline["quality_control"]["perform"]:
+        print(f"Now generating output for assessing data quality")
+        run_pipeline.pipeline_quality_control(steps=pipeline["quality_control"])
