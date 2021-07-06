@@ -2,7 +2,10 @@
 pipeline: <PIPELINE NAME>
 output_dir: profiles
 platemap_well_column: Metadata_well_position
-compartments: cells,cytoplasm,nuclei
+compartments:
+  - cells
+  - cytoplasm
+  - nuclei
 aggregate:
   perform: true
   plate_column: Metadata_Plate

@@ -34,7 +34,7 @@ class RunPipeline(object):
         self.output_dir = pathlib.PurePath(".", self.pipeline_output)
 
         # Check for noncanonical compartments
-        self.compartments = list(pipeline["compartments"].split(","))
+        self.compartments = pipeline["compartments"]
         canonical_compartments = get_default_compartments()
         self.noncanonical = False
         self.noncanonical_compartments = []
