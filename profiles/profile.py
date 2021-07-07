@@ -121,18 +121,24 @@ class RunPipeline(object):
         platemap_well_column = self.pipeline["platemap_well_column"]
         annotate_well_column = annotate_steps["well_column"]
 
-        if annotate_steps["external"]:
+        if annotate_steps["external"]["perform"]:
             external_df = pd.read_csv(
-                pathlib.PurePath(".", "metadata", "moa", annotate_steps["external"]),
+                pathlib.PurePath(".", "metadata", "moa", annotate_steps["external"]["file"]),
                 sep="\t",
             )
+
+            if annotate_steps["external"]["merge_column"].startswith('Metadata'):
+                external_join_column = [annotate_steps["external"]["merge_column"]]
+            else:
+                external_join_column = ['Metadata_'+annotate_steps["external"]["merge_column"]]
+
             annotate(
                 profiles=aggregate_output_file,
                 platemap=plate_map_df,
                 join_on=[platemap_well_column, annotate_well_column],
                 external_metadata=external_df,
-                external_join_left=["Metadata_broad_sample"],
-                external_join_right=["Metadata_broad_sample"],
+                external_join_left=external_join_column,
+                external_join_right=external_join_column,
                 output_file=annotate_output_file,
                 compression_options=self.pipeline_options["compression"],
                 float_format=self.pipeline_options["float_format"],

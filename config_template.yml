@@ -14,7 +14,10 @@ aggregate:
 annotate:
   perform: true
   well_column: Metadata_Well
-  external : <OPTIONAL METADATA TSV>
+  external :
+    perform: true
+    file: <metadata file name>
+    merge_column: <Column to merge on>
 normalize:
   perform: true
   method: mad_robustize
