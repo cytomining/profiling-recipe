@@ -123,7 +123,7 @@ class RunPipeline(object):
 
         if annotate_steps["external"]["perform"]:
             external_df = pd.read_csv(
-                pathlib.PurePath(".", "metadata", "moa", annotate_steps["external"]["file"]),
+                pathlib.PurePath(".", "metadata", "external_metadata", annotate_steps["external"]["file"]),
                 sep="\t",
             )
 
