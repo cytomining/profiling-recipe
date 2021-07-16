@@ -61,15 +61,6 @@ class RunPipeline(object):
         strata = [aggregate_plate_column, aggregate_well_column]
         sql_file = f'sqlite:////{os.path.abspath(os.path.join("../../backend", batch, plate, f"{plate}.sqlite"))}'
 
-        if "fields" in aggregate_steps:
-            aggregate_fields = aggregate_steps["fields"]
-            if type(aggregate_fields) == int:
-                aggregate_fields = [aggregate_fields]
-            else:
-                aggregate_fields = list(map(int, aggregate_fields.split(",")))
-        else:
-            aggregate_fields = "all"
-
         if "site_column" in aggregate_steps:
             aggregate_site_column = aggregate_steps["site_column"]
             strata += [aggregate_site_column]
@@ -85,7 +76,7 @@ class RunPipeline(object):
             compartments=self.compartments,
             compartment_linking_cols=linking_columns,
             aggregation_operation=aggregate_steps["method"],
-            fields_of_view=aggregate_fields,
+            fields_of_view=aggregate_steps["fields"],
             object_feature=object_feature,
         )
 
