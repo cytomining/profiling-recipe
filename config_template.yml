@@ -11,6 +11,7 @@ aggregate:
   plate_column: Metadata_Plate
   well_column: Metadata_Well
   method: median
+  fields: all
 annotate:
   perform: true
   well_column: Metadata_Well
