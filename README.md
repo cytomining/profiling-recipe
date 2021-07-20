@@ -182,7 +182,7 @@ cp profiling-recipe/config_template.yml config_files/${CONFIG_FILE}.yml
 The config file contains all the parameters that various pycytominer functions, called by the profiling pipeline, require. To run the profiling pipeline with different parameters, multiple config files can be created. Each parameter in the config file is described below. All the necessary changes to the config file must be made before the pipeline can be run.
 
 ## Copy aggregated profile
-If the first step of the profiling pipeline, `aggregate`, has already been performed (in the `backend` folder, there is a `.csv` file in addition to `.sqlite` file) then the `.csv` file has to be copied to the data repository or data directory. If not, skip to (#Running the profiling pipeline).
+If the first step of the profiling pipeline, `aggregate`, has already been performed (in the `backend` folder, there is a `.csv` file in addition to `.sqlite` file) then the `.csv` file has to be copied to the data repository or data directory. If not, skip to [Running the profiling pipeline](#running-the-profiling-pipeline).
 
 Run the following commands for each batch separately. These commands create a folder for each batch, compress the `.csv` files, and then copy them to the data repository or data directory.
 
@@ -323,8 +323,8 @@ annotate:
   well_column: Metadata_Well
   external :
     perform: true
-	file: <metadata file name>
-	merge_column: <Column to merge on>
+    file: <metadata file name>
+    merge_column: <Column to merge on>
 ```
 
 - `perform` - Whether to perform annotation. Default is `true`. Set to `false` if this should not be performed.
@@ -372,9 +372,9 @@ feature_select:
   level: plate
   operations:
     - variance_threshold
-	- correlation_threshold
-	- drop_na_columns
-	- blocklist
+    - correlation_threshold
+    - drop_na_columns
+    - blocklist
 ```
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
