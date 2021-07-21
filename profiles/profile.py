@@ -394,7 +394,7 @@ class RunPipeline(object):
                         if "Metadata_Object_Count" in df.columns:
                             cell_count_feature = "Metadata_Object_Count"
                         else:
-                            cell_count_feature = "Cells_Number_Object_Number"
+                            cell_count_feature = "Cytoplasm_Number_Object_Number"
 
                         df = df[["Metadata_Row", "Metadata_Col", cell_count_feature]]
                         df_pivot = df.pivot(
