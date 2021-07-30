@@ -236,20 +236,22 @@ git push
 # Files generated
 Running the profiling workflow with all the steps included generates the following files
 
-| Filename                                                  | Description                                                                                                   |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `<PLATE>.csv.gz`                                          | Aggregated well-level profiles                                                                                |
-| `<PLATE>_augmented.csv.gz`                                | Metadata annotated profiles                                                                                   |
-| `<PLATE>_normalized.csv.gz`                               | Profiles normalized to the whole plate                                                                        |
-| `<PLATE>_normalized_negcon.csv.gz `                       | Profiles normalized to the negative control                                                                   |
-| `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz`        | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level      |
-| `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level |
-| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked normalized profiles that are feature selected at the `batch` or `all plates` level        |
-| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file                   |
-| `summary.tsv`                                             | Summary statistics                                                                                            |
-| `<PLATE>_cell_count.png`                                  | Plate cell count                                                                                              |
-| `<PLATE>_correlation.png`                                 | Pairwise correlation between all the wells on a plate                                                         |
-| `<PLATE>_position_effect.png`                             | Percent Matching between each well and other wells in the same row and column                                 |
+| Filename                                                  | Description                                                                                                             |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `<PLATE>.csv.gz`                                          | Aggregated well-level profiles                                                                                          |
+| `<PLATE>_augmented.csv.gz`                                | Metadata annotated profiles                                                                                             |
+| `<PLATE>_normalized.csv.gz`                               | Profiles normalized to the whole plate                                                                                  |
+| `<PLATE>_normalized_negcon.csv.gz `                       | Profiles normalized to the negative control                                                                             |
+| `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz`        | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level                |
+| `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level           |
+| `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz`        | Batch level stacked whole plate normalized profiles that are feature selected at the `batch` or `all plates` level      |
+| `<BATCH>_normalized_feature_select_<LEVEL>.gct`           | `.gct` file created from the `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` file                                    |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked negative control normalized profiles that are feature selected at the `batch` or `all plates` level |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.gct`    | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file                             |
+| `summary.tsv`                                             | Summary statistics                                                                                                      |
+| `<PLATE>_cell_count.png`                                  | Plate cell count                                                                                                        |
+| `<PLATE>_correlation.png`                                 | Pairwise correlation between all the wells on a plate                                                                   |
+| `<PLATE>_position_effect.png`                             | Percent Matching between each well and other wells in the same row and column                                           |
 	
 # Config file
 ## Pipeline parameters
