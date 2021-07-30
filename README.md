@@ -48,7 +48,7 @@ backend
 
 *Note: Aggregation may not have been performed already. In that case, only the `.sqlite` file will be available for download.*
 
-## Welding to the data repository
+## Welding to the data repository (Recommended)
 Welding is a process by which the profiling-recipe repository is added to the data repository as a submodule such that the files in the data repository and the scripts in the profiling-recipe that generated those files, are versioned together. Instructions for welding is provided [here](https://github.com/cytomining/profiling-template#readme). We highly recommend welding the profiling-recipe to the data repository. After welding, clone the data repository to the `software` folder, using the command
 
 ```bash
@@ -101,6 +101,27 @@ software
             └── csv2gz.py
 ```
 
+## Downloading load_data_csv
+Generating summary statistics table requires `load_data_csv` files. These files should be downloaded to the `load_data_csv` directory. Make sure the files are gzipped, and the folder structure looks as follows.
+
+```bash
+load_data_csv/
+├── batch1
+│   ├── plate1
+│   │   ├── load_data.csv.gz
+│   │   └── load_data_with_illum.csv.gz
+│   └── plate2
+│       ├── load_data.csv.gz
+│       └── load_data_with_illum.csv.gz
+└── batch2
+    ├── plate1
+    │   ├── load_data.csv.gz
+    │   └── load_data_with_illum.csv.gz
+    └── plate2
+        ├── load_data.csv.gz
+        └── load_data_with_illum.csv.gz
+```
+
 # Running the pipeline
 The pipeline should be run from the data repository or data directory.
 
@@ -135,8 +156,6 @@ The directories that will contain the output of the pipeline are created as foll
 ```bash
 profiling-recipe/scripts/create_dirs.sh
 ```
-
----
 
 ## Metadata, platemap and barcode_platemap files
 The pipeline requires `barcode_platemap.csv` and `platemap.txt` to run. An optional `external_metadata.tsv` can also be provided for additional annotation. The following are the descriptions of each of these files
@@ -378,7 +397,7 @@ feature_select:
 ```
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
-- `features`: Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
+- `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
 - `level` - Level at which feature selection should be performed. Default is `plate`. Feature selection can also be performed at `batch` and `all` plates level.
 - `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the thershold across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
@@ -398,7 +417,7 @@ feature_select_negcon:
 ```
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
-- `features`: Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
+- `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
 - `level` - Level at which feature selection should be performed. Default is `plate`. Feature selection can also be performed at `batch` and `all` plates level.
 - `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the thershold across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
