@@ -60,6 +60,7 @@ def create_directories(batch, plate, pipeline):
 
 def create_gct_directories(batch):
     output_dir = pathlib.PurePath(".", "gct", batch)
+
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
 

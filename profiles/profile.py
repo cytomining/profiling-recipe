@@ -275,16 +275,39 @@ class RunPipeline(object):
 
                 if gct:
                     create_gct_directories(batch)
-                    stacked_file = pathlib.PurePath(".", "gct", batch, f"{batch}_normalized_feature_select_{suffix}_batch.csv.gz")
-                    gct_file = pathlib.PurePath(".", "gct", batch, f"{batch}_normalized_feature_select_{suffix}_batch.gct")
+                    if suffix:
+                        stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_{suffix}_batch.csv.gz",
+                        )
+                        gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_{suffix}_batch.gct",
+                        )
+                    else:
+                        stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_batch.csv.gz",
+                        )
+                        gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_batch`.gct",
+                        )
                     cyto_utils.output(
                         output_filename=stacked_file,
                         df=batch_df,
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
                     )
-                    write_gct(profiles=batch_df,
-                              output_file=gct_file)
+                    write_gct(profiles=batch_df, output_file=gct_file)
 
         if level == "all":
             fs_df = feature_select(
@@ -293,7 +316,9 @@ class RunPipeline(object):
                 operation=feature_select_operations,
             )
             for batch in self.profile_config:
-                fs_batch_df = fs_df.loc[fs_df.Metadata_batch == batch].reset_index(drop=True)
+                fs_batch_df = fs_df.loc[fs_df.Metadata_batch == batch].reset_index(
+                    drop=True
+                )
                 for plate in self.profile_config[batch]:
                     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
                     if suffix:
@@ -310,10 +335,8 @@ class RunPipeline(object):
                             all_plates_df, compartments=self.compartments
                         )
 
-                    df = (
-                        fs_batch_df
-                        .query("Metadata_Plate==@plate")
-                        .reset_index(drop=True)
+                    df = fs_batch_df.query("Metadata_Plate==@plate").reset_index(
+                        drop=True
                     )
 
                     df = df.drop(columns=["Metadata_batch"])
@@ -327,16 +350,39 @@ class RunPipeline(object):
 
                 if gct:
                     create_gct_directories(batch)
-                    stacked_file = pathlib.PurePath(".", "gct", batch, f"{batch}_normalized_feature_select_{suffix}_all.csv.gz")
-                    gct_file = pathlib.PurePath(".", "gct", batch, f"{batch}_normalized_feature_select_{suffix}_all.gct")
+                    if suffix:
+                        stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_{suffix}_all.csv.gz",
+                        )
+                        gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_{suffix}_all.gct",
+                        )
+                    else:
+                        stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_all.csv.gz",
+                        )
+                        gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_normalized_feature_select_all.gct",
+                        )
                     cyto_utils.output(
                         output_filename=stacked_file,
                         df=fs_batch_df,
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
                     )
-                    write_gct(profiles=fs_batch_df,
-                              output_file=gct_file)
+                    write_gct(profiles=fs_batch_df, output_file=gct_file)
 
     def pipeline_quality_control(self, steps):
         quality_control_steps = steps["operations"]
