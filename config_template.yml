@@ -1,0 +1,74 @@
+---
+pipeline: <PIPELINE NAME>
+output_dir: profiles
+platemap_well_column: Metadata_well_position
+compartments:
+  - cells
+  - cytoplasm
+  - nuclei
+aggregate:
+  perform: true
+  plate_column: Metadata_Plate
+  well_column: Metadata_Well
+  method: median
+  fields: all
+annotate:
+  perform: true
+  well_column: Metadata_Well
+  external :
+    perform: true
+    file: <metadata file name>
+    merge_column: <Column to merge on>
+normalize:
+  perform: true
+  method: mad_robustize
+  features: infer
+normalize_negcon:
+  perform: true
+  method: mad_robustize
+  features: infer
+feature_select:
+  perform: true
+  features: infer
+  level: batch
+  gct: false
+  operations:
+    - variance_threshold
+    - correlation_threshold
+    - drop_na_columns
+    - blocklist
+feature_select_negcon:
+  perform: true
+  features: infer
+  level: batch
+  gct: false
+  operations:
+    - variance_threshold
+    - correlation_threshold
+    - drop_na_columns
+    - blocklist
+quality_control:
+  perform: true
+  operations:
+    - summary
+    - heatmap
+options:
+  compression: gzip
+  float_format: "%.5g"
+  samples: all
+---
+batch: <FIRST BATCH NAME>
+plates:
+  - name: <FIRST PLATE NAME>
+    process: true
+  - name: <SECOND PLATE NAME>
+    process: true
+process: true
+---
+batch: <SECOND BATCH NAME>
+plates:
+  - name: <FIRST PLATE NAME>
+    process: true
+  - name: <SECOND PLATE NAME>
+    process: true
+process: true
