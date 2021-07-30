@@ -30,7 +30,8 @@ normalize_negcon:
 feature_select:
   perform: true
   features: infer
-  level: plate
+  level: batch
+  gct: false
   operations:
     - variance_threshold
     - correlation_threshold
@@ -39,7 +40,8 @@ feature_select:
 feature_select_negcon:
   perform: true
   features: infer
-  level: plate
+  level: batch
+  gct: false
   operations:
     - variance_threshold
     - correlation_threshold

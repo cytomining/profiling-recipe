@@ -388,7 +388,7 @@ These are parameters that are processed by the `pipeline_feature_select()` funct
 feature_select:
   perform: true
   features: infer
-  level: plate
+  level: batch
   operations:
     - variance_threshold
     - correlation_threshold
@@ -398,7 +398,7 @@ feature_select:
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
-- `level` - Level at which feature selection should be performed. Default is `plate`. Feature selection can also be performed at `batch` and `all` plates level.
+- `level` - Level at which feature selection should be performed. Default is `batch`. Feature selection can also be performed at `batch` and `all` plates level.
 - `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the thershold across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
 ### `feature_select_negcon` parameters
@@ -408,7 +408,7 @@ These are parameters that are processed by the `pipeline_feature_select()` funct
 feature_select_negcon:
   perform: true
   features: infer
-  level: plate
+  level: batch
   operations:
     - variance_threshold
     - correlation_threshold
@@ -418,10 +418,10 @@ feature_select_negcon:
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
-- `level` - Level at which feature selection should be performed. Default is `plate`. Feature selection can also be performed at `batch` and `all` plates level.
+- `level` - Level at which feature selection should be performed. Default is `batch`. Feature selection can also be performed at `batch` and `all` plates level.
 - `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the thershold across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
-## quality_control parameters
+## `quality_control` parameters
 These parameters specify the type of quality control metrics and figures to generate. `summary` generates a table with summary statistics while `heatmap` generates three heatmaps, each showing a different quality control metric.
 
 ```yaml
@@ -435,7 +435,7 @@ quality_control:
 - `perform` - Whether to generate quality control metrics or figures. Default is `true`. Set to `false` if these should not be generated.
 - `operations` - List of different qc metrics of figures to generate.
 
-## batch and parameters
+## `batch` and `plates` parameters
 These parameters specify the name of the batch and plate to process. 
 
 ```yaml
