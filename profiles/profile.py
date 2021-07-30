@@ -299,15 +299,15 @@ class RunPipeline(object):
                             ".",
                             "gct",
                             batch,
-                            f"{batch}_normalized_feature_select_batch`.gct",
+                            f"{batch}_normalized_feature_select_batch.gct",
                         )
                     cyto_utils.output(
                         output_filename=stacked_file,
-                        df=batch_df,
+                        df=fs_df,
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
                     )
-                    write_gct(profiles=batch_df, output_file=gct_file)
+                    write_gct(profiles=fs_df, output_file=gct_file)
 
         if level == "all":
             fs_df = feature_select(
