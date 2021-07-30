@@ -58,6 +58,13 @@ def create_directories(batch, plate, pipeline):
         os.mkdir(output_dir)
 
 
+def create_gct_directories(batch):
+    output_dir = pathlib.PurePath(".", "gct", batch)
+
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+
 def create_linking_columns(noncanonical, noncanonical_compartments):
     linking_columns = get_default_linking_cols()
 

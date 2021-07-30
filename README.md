@@ -236,18 +236,22 @@ git push
 # Files generated
 Running the profiling workflow with all the steps included generates the following files
 
-| Filename                                                  | Description                                                                                          |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `<PLATE>.csv.gz`                                          | Aggregated well-level profiles                                                                       |
-| `<PLATE>_augmented.csv.gz`                                | Metadata annotated profiles                                                                          |
-| `<PLATE>_normalized.csv.gz`                               | Profiles normalized to the whole plate                                                               |
-| `<PLATE>_normalized_negcon.csv.gz `                       | Profiles normalized to the negative control                                                          |
-| `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz`        | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level      |
-| `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level |
-| `summary.tsv`                                             | Summary statistics                                                                                   |
-| `<PLATE>_cell_count.png`                                  | Plate cell count                                                                                     |
-| `<PLATE>_correlation.png`                                 | Pairwise correlation between all the wells on a plate                                                |
-| `<PLATE>_position_effect.png`                             | Percent Matching between each well and other wells in the same row and column                        |
+| Filename                                                  | Description                                                                                                             |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `<PLATE>.csv.gz`                                          | Aggregated well-level profiles                                                                                          |
+| `<PLATE>_augmented.csv.gz`                                | Metadata annotated profiles                                                                                             |
+| `<PLATE>_normalized.csv.gz`                               | Profiles normalized to the whole plate                                                                                  |
+| `<PLATE>_normalized_negcon.csv.gz `                       | Profiles normalized to the negative control                                                                             |
+| `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz`        | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level                |
+| `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level           |
+| `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz`        | Batch level stacked whole plate normalized profiles that are feature selected at the `batch` or `all plates` level      |
+| `<BATCH>_normalized_feature_select_<LEVEL>.gct`           | `.gct` file created from the `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` file                                    |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked negative control normalized profiles that are feature selected at the `batch` or `all plates` level |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.gct`    | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file                             |
+| `summary.tsv`                                             | Summary statistics                                                                                                      |
+| `<PLATE>_cell_count.png`                                  | Plate cell count                                                                                                        |
+| `<PLATE>_correlation.png`                                 | Pairwise correlation between all the wells on a plate                                                                   |
+| `<PLATE>_position_effect.png`                             | Percent Matching between each well and other wells in the same row and column                                           |
 	
 # Config file
 ## Pipeline parameters
@@ -388,7 +392,8 @@ These are parameters that are processed by the `pipeline_feature_select()` funct
 feature_select:
   perform: true
   features: infer
-  level: plate
+  level: batch
+  gct: false
   operations:
     - variance_threshold
     - correlation_threshold
@@ -398,8 +403,9 @@ feature_select:
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
-- `level` - Level at which feature selection should be performed. Default is `plate`. Feature selection can also be performed at `batch` and `all` plates level.
-- `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the thershold across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
+- `level` - Level at which feature selection should be performed. Default is `batch`. Feature selection can also be performed at `batch` and `all` plates level.
+- `gct` - Whether to create batch level stacked profile and a `.gct` file. Default is `false`. Stacked profiles and `.gct` files are created only when `level` is `batch` or `all`.
+- `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the threshold, across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
 ### `feature_select_negcon` parameters
 These are parameters that are processed by the `pipeline_feature_select()` function that interacts with `pycytominer.feature_select()` and selects features in the profiles normalized to the negative control.
@@ -408,7 +414,8 @@ These are parameters that are processed by the `pipeline_feature_select()` funct
 feature_select_negcon:
   perform: true
   features: infer
-  level: plate
+  level: batch
+  gct: false
   operations:
     - variance_threshold
     - correlation_threshold
@@ -418,10 +425,11 @@ feature_select_negcon:
 
 - `perform` - Whether to perform feature selection. Default is `true`. Set to `false` if this should not be performed.
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
-- `level` - Level at which feature selection should be performed. Default is `plate`. Feature selection can also be performed at `batch` and `all` plates level.
-- `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the thershold across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
+- `level` - Level at which feature selection should be performed. Default is `batch`. Feature selection can also be performed at `batch` and `all` plates level.
+- `gct` - Whether to create batch level stacked profile and a `.gct` file. Default is `false`. Stacked profiles and `.gct` files are created only when `level` is `batch` or `all`.
+- `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the threshold, across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
-## quality_control parameters
+## `quality_control` parameters
 These parameters specify the type of quality control metrics and figures to generate. `summary` generates a table with summary statistics while `heatmap` generates three heatmaps, each showing a different quality control metric.
 
 ```yaml
@@ -435,7 +443,7 @@ quality_control:
 - `perform` - Whether to generate quality control metrics or figures. Default is `true`. Set to `false` if these should not be generated.
 - `operations` - List of different qc metrics of figures to generate.
 
-## batch and parameters
+## `batch` and `plates` parameters
 These parameters specify the name of the batch and plate to process. 
 
 ```yaml
