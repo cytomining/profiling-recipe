@@ -74,6 +74,13 @@ class RunPipeline(object):
         else:
             object_feature = "Metadata_ObjectNumber"
 
+        if "image_feature_categories" in aggregate_steps:
+            image_feature_categories = aggregate_steps["image_feature_categories"]
+            add_image_features = True
+        else:
+            image_feature_categories = []
+            add_image_features = False
+
         ap = SingleCells(
             sql_file,
             strata=strata,
@@ -82,6 +89,8 @@ class RunPipeline(object):
             aggregation_operation=aggregate_steps["method"],
             fields_of_view=aggregate_steps["fields"],
             object_feature=object_feature,
+            add_image_features=add_image_features,
+            image_feature_categories=image_feature_categories,
         )
 
         ap.aggregate_profiles(
