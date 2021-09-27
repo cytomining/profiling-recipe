@@ -8,4 +8,4 @@ dependencies:
 - plotly::python-kaleido=0.0.3
 - pip
 - pip:
-  - git+https://github.com/cytomining/pycytominer@776d87499897fdbb0f574b350608e45db59ee50d
+  - git+https://github.com/cytomining/pycytominer@0734848bb4f2d4283f6e90c9b855c8e1d965d035
