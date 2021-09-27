@@ -180,6 +180,7 @@ class RunPipeline(object):
 
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
+        image_features = normalize_steps["image_features"]
 
         if normalization_features == "infer" and self.noncanonical:
             normalization_features = cyto_utils.infer_cp_features(
@@ -189,6 +190,7 @@ class RunPipeline(object):
         normalize(
             profiles=annotate_output_file,
             features=normalization_features,
+            image_features=image_features,
             samples=samples,
             method=normalization_method,
             output_file=normalize_output_file,
@@ -204,6 +206,7 @@ class RunPipeline(object):
         gct = feature_select_steps["gct"]
         feature_select_operations = feature_select_steps["operations"]
         feature_select_features = feature_select_steps["features"]
+        image_features = feature_select_steps["image_features"]
 
         all_plates_df = pd.DataFrame()
 
@@ -239,6 +242,7 @@ class RunPipeline(object):
                     feature_select(
                         profiles=df,
                         features=feature_select_features,
+                        image_features=image_features,
                         operation=feature_select_operations,
                         output_file=feature_select_output_file_plate,
                         compression_options=self.pipeline_options["compression"],
@@ -253,6 +257,7 @@ class RunPipeline(object):
                 fs_df = feature_select(
                     profiles=batch_df,
                     features=feature_select_features,
+                    image_features=image_features,
                     operation=feature_select_operations,
                 )
                 for plate in self.profile_config[batch]:
@@ -322,6 +327,7 @@ class RunPipeline(object):
             fs_df = feature_select(
                 profiles=all_plates_df,
                 features=feature_select_features,
+                image_features=image_features,
                 operation=feature_select_operations,
             )
             for batch in self.profile_config:

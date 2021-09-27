@@ -26,15 +26,18 @@ normalize:
   perform: true
   method: mad_robustize
   features: infer
+  image_features: true
 normalize_negcon:
   perform: true
   method: mad_robustize
   features: infer
+  image_features: true
 feature_select:
   perform: true
   features: infer
   level: batch
   gct: false
+  image_features: true
   operations:
     - variance_threshold
     - correlation_threshold
@@ -45,6 +48,7 @@ feature_select_negcon:
   features: infer
   level: batch
   gct: false
+  image_features: true
   operations:
     - variance_threshold
     - correlation_threshold
