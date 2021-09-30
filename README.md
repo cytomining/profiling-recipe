@@ -337,6 +337,14 @@ fields:
   - 9
 ```
 
+Additionally, to add image features to the profiles, list the feature categories to the parameter `image_feature_categories`. For example
+
+```yaml
+image_feature_catageories:
+  - Count
+  - Intensity
+```
+
 ## `annotate` parameters
 These are parameters that are processed by the `pipeline_annotate()` function that interacts with `pycytominer.annotate()` and annotates the well level profiles with metadata.
 
