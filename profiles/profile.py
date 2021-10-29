@@ -235,7 +235,11 @@ class RunPipeline(object):
                         compartments=self.compartments,
                     )
 
-                df = pd.read_csv(normalize_output_file).assign(Metadata_batch=batch)
+                df = (
+                    pd.read_csv(normalize_output_file)
+                    .assign(Metadata_batch=batch)
+                    .astype({'Metadata_Plate': str})
+                )
 
                 if level == "plate":
                     df = df.drop(columns=["Metadata_batch"])
