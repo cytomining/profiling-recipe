@@ -58,9 +58,12 @@ feature_select_negcon:
     - blocklist
 quality_control:
   perform: true
-  operations:
-    - summary
-    - heatmap
+  summary:
+    perform: true
+    row: Metadata_Row
+    column: Metadata_Col
+  heatmap:
+    perform : true
 options:
   compression: gzip
   float_format: "%.5g"

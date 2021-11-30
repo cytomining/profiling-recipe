@@ -405,8 +405,7 @@ class RunPipeline(object):
                     )
                     write_gct(profiles=fs_batch_df, output_file=gct_file)
 
-    def pipeline_quality_control(self, steps):
-        quality_control_steps = steps["operations"]
+    def pipeline_quality_control(self, operations):
         pipeline_output = self.pipeline["output_dir"]
 
         summary_column_order = [
@@ -422,241 +421,243 @@ class RunPipeline(object):
         if not os.path.isdir(pathlib.PurePath(qc_dir)):
             os.mkdir(qc_dir)
 
-        for step in quality_control_steps:
-            if step == "summary":
-                output_dir = pathlib.PurePath(".", "quality_control", "summary")
-                if not os.path.isdir(pathlib.PurePath(output_dir)):
-                    os.mkdir(output_dir)
-                output_file = pathlib.PurePath(output_dir, "summary.tsv")
-                if os.path.isfile(output_file):
-                    summary = pd.read_csv(output_file, sep="\t")
-                else:
-                    summary = pd.DataFrame()
-                for batch in self.profile_config:
-                    for plate in self.profile_config[batch]:
-                        input_file = pathlib.PurePath(
-                            ".", "load_data_csv", batch, plate, "load_data.csv.gz"
-                        )
-                        df = pd.read_csv(input_file).assign(Metadata_batch=batch)
+        if operations["summary"]["perform"]:
+            row = operations["summary"]["row"]
+            column = operations["summary"]["column"]
+            output_dir = pathlib.PurePath(".", "quality_control", "summary")
+            if not os.path.isdir(pathlib.PurePath(output_dir)):
+                os.mkdir(output_dir)
+            output_file = pathlib.PurePath(output_dir, "summary.tsv")
+            if os.path.isfile(output_file):
+                summary = pd.read_csv(output_file, sep="\t")
+            else:
+                summary = pd.DataFrame()
+            for batch in self.profile_config:
+                for plate in self.profile_config[batch]:
+                    input_file = pathlib.PurePath(
+                        ".", "load_data_csv", batch, plate, "load_data.csv.gz"
+                    )
+                    df = pd.read_csv(input_file).assign(Metadata_batch=batch)
 
-                        site_df = (
-                            df.groupby(["Metadata_Row", "Metadata_Col"])
+                    site_df = (
+                        df.groupby([row, column])
                             .Metadata_Site.count()
                             .reset_index()
                             .Metadata_Site
+                    )
+                    image_count = len(
+                        df.columns[df.columns.str.startswith("FileName")]
+                    )
+
+                    summary = summary.append(
+                        {
+                            "Batch_Name": batch,
+                            "Plate_Name": plate,
+                            "Well_Count": site_df.count(),
+                            "Images_per_site": image_count,
+                            "Sites_per_well_Median": site_df.median(),
+                            "Sites_per_well_mad": "%.3f" % site_df.mad(),
+                        },
+                        ignore_index=True,
+                    )
+
+            summary["Well_Count"] = summary["Well_Count"].astype(int)
+            summary["Images_per_site"] = summary["Images_per_site"].astype(int)
+            summary["Sites_per_well_Median"] = summary[
+                "Sites_per_well_Median"
+            ].astype(int)
+
+            summary = summary.drop_duplicates(
+                subset=["Batch_Name", "Plate_Name"], keep="last"
+            ).sort_values(by=["Batch_Name", "Plate_Name"])
+
+            summary[summary_column_order].to_csv(output_file, sep="\t", index=False)
+
+        if operations["heatmap"]["perform"]:
+            output_dir = pathlib.PurePath(".", "quality_control", "heatmap")
+            if not os.path.isdir(pathlib.PurePath(output_dir)):
+                os.mkdir(output_dir)
+            for batch in self.profile_config:
+                for plate in self.profile_config[batch]:
+                    input_file = pathlib.PurePath(
+                        ".",
+                        pipeline_output,
+                        batch,
+                        plate,
+                        f"{plate}_augmented.csv.gz",
+                    )
+                    df = (
+                        pd.read_csv(input_file)
+                        .assign(Metadata_Row=lambda x: x.Metadata_Well.str[0:1])
+                        .assign(Metadata_Col=lambda x: x.Metadata_Well.str[1:])
+                    )
+                    if "Metadata_Object_Count" in df.columns:
+                        cell_count_feature = "Metadata_Object_Count"
+                    else:
+                        cell_count_feature = "Cytoplasm_Number_Object_Number"
+
+                    df = df[["Metadata_Row", "Metadata_Col", cell_count_feature]]
+                    df_pivot = df.pivot(
+                        "Metadata_Row", "Metadata_Col", cell_count_feature
+                    )
+
+                    fig = px.imshow(df_pivot, color_continuous_scale="blues")
+                    fig.update_layout(
+                        title=f"Plate: {plate}, Feature: {cell_count_feature}",
+                        xaxis=dict(title="", side="top"),
+                        yaxis=dict(title=""),
+                    )
+                    fig.update_traces(xgap=1, ygap=1)
+
+                    if not os.path.isdir(pathlib.PurePath(output_dir, batch)):
+                        os.mkdir(pathlib.PurePath(output_dir, batch))
+                    if not os.path.isdir(
+                        pathlib.PurePath(output_dir, batch, plate)
+                    ):
+                        os.mkdir(pathlib.PurePath(output_dir, batch, plate))
+
+                    output_file = (
+                        f"{output_dir}/{batch}/{plate}/{plate}_cell_count.png"
+                    )
+                    fig.write_image(output_file, width=640, height=480, scale=2)
+
+                    if os.path.isfile(
+                        pathlib.PurePath(
+                            ".",
+                            pipeline_output,
+                            batch,
+                            plate,
+                            f"{plate}_normalized_feature_select_negcon_all.csv.gz",
                         )
-                        image_count = len(
-                            df.columns[df.columns.str.startswith("FileName")]
-                        )
-
-                        summary = summary.append(
-                            {
-                                "Batch_Name": batch,
-                                "Plate_Name": plate,
-                                "Well_Count": site_df.count(),
-                                "Images_per_site": image_count,
-                                "Sites_per_well_Median": site_df.median(),
-                                "Sites_per_well_mad": "%.3f" % site_df.mad(),
-                            },
-                            ignore_index=True,
-                        )
-
-                summary["Well_Count"] = summary["Well_Count"].astype(int)
-                summary["Images_per_site"] = summary["Images_per_site"].astype(int)
-                summary["Sites_per_well_Median"] = summary[
-                    "Sites_per_well_Median"
-                ].astype(int)
-
-                summary = summary.drop_duplicates(
-                    subset=["Batch_Name", "Plate_Name"], keep="last"
-                ).sort_values(by=["Batch_Name", "Plate_Name"])
-
-                summary[summary_column_order].to_csv(output_file, sep="\t", index=False)
-            elif step == "heatmap":
-                output_dir = pathlib.PurePath(".", "quality_control", "heatmap")
-                if not os.path.isdir(pathlib.PurePath(output_dir)):
-                    os.mkdir(output_dir)
-                for batch in self.profile_config:
-                    for plate in self.profile_config[batch]:
+                    ):
                         input_file = pathlib.PurePath(
                             ".",
                             pipeline_output,
                             batch,
                             plate,
-                            f"{plate}_augmented.csv.gz",
+                            f"{plate}_normalized_feature_select_negcon_all.csv.gz",
                         )
-                        df = (
-                            pd.read_csv(input_file)
-                            .assign(Metadata_Row=lambda x: x.Metadata_Well.str[0:1])
-                            .assign(Metadata_Col=lambda x: x.Metadata_Well.str[1:])
+                    elif os.path.isfile(
+                        pathlib.PurePath(
+                            ".",
+                            pipeline_output,
+                            batch,
+                            plate,
+                            f"{plate}_normalized_feature_select_negcon_batch.csv.gz",
                         )
-                        if "Metadata_Object_Count" in df.columns:
-                            cell_count_feature = "Metadata_Object_Count"
-                        else:
-                            cell_count_feature = "Cytoplasm_Number_Object_Number"
-
-                        df = df[["Metadata_Row", "Metadata_Col", cell_count_feature]]
-                        df_pivot = df.pivot(
-                            "Metadata_Row", "Metadata_Col", cell_count_feature
+                    ):
+                        input_file = pathlib.PurePath(
+                            ".",
+                            pipeline_output,
+                            batch,
+                            plate,
+                            f"{plate}_normalized_feature_select_negcon_batch.csv.gz",
                         )
-
-                        fig = px.imshow(df_pivot, color_continuous_scale="blues")
-                        fig.update_layout(
-                            title=f"Plate: {plate}, Feature: {cell_count_feature}",
-                            xaxis=dict(title="", side="top"),
-                            yaxis=dict(title=""),
+                    elif os.path.isfile(
+                        pathlib.PurePath(
+                            ".",
+                            pipeline_output,
+                            batch,
+                            plate,
+                            f"{plate}_normalized_feature_select_negcon_plate.csv.gz",
                         )
-                        fig.update_traces(xgap=1, ygap=1)
-
-                        if not os.path.isdir(pathlib.PurePath(output_dir, batch)):
-                            os.mkdir(pathlib.PurePath(output_dir, batch))
-                        if not os.path.isdir(
-                            pathlib.PurePath(output_dir, batch, plate)
-                        ):
-                            os.mkdir(pathlib.PurePath(output_dir, batch, plate))
-
-                        output_file = (
-                            f"{output_dir}/{batch}/{plate}/{plate}_cell_count.png"
+                    ):
+                        input_file = pathlib.PurePath(
+                            ".",
+                            pipeline_output,
+                            batch,
+                            plate,
+                            f"{plate}_normalized_feature_select_negcon_plate.csv.gz",
                         )
-                        fig.write_image(output_file, width=640, height=480, scale=2)
+                    else:
+                        continue
 
-                        if os.path.isfile(
-                            pathlib.PurePath(
-                                ".",
-                                pipeline_output,
-                                batch,
-                                plate,
-                                f"{plate}_normalized_feature_select_negcon_all.csv.gz",
-                            )
-                        ):
-                            input_file = pathlib.PurePath(
-                                ".",
-                                pipeline_output,
-                                batch,
-                                plate,
-                                f"{plate}_normalized_feature_select_negcon_all.csv.gz",
-                            )
-                        elif os.path.isfile(
-                            pathlib.PurePath(
-                                ".",
-                                pipeline_output,
-                                batch,
-                                plate,
-                                f"{plate}_normalized_feature_select_negcon_batch.csv.gz",
-                            )
-                        ):
-                            input_file = pathlib.PurePath(
-                                ".",
-                                pipeline_output,
-                                batch,
-                                plate,
-                                f"{plate}_normalized_feature_select_negcon_batch.csv.gz",
-                            )
-                        elif os.path.isfile(
-                            pathlib.PurePath(
-                                ".",
-                                pipeline_output,
-                                batch,
-                                plate,
-                                f"{plate}_normalized_feature_select_negcon_plate.csv.gz",
-                            )
-                        ):
-                            input_file = pathlib.PurePath(
-                                ".",
-                                pipeline_output,
-                                batch,
-                                plate,
-                                f"{plate}_normalized_feature_select_negcon_plate.csv.gz",
-                            )
-                        else:
-                            continue
+                    df = pd.read_csv(input_file)
+                    profiles = df[cyto_utils.infer_cp_features(df)]
 
-                        df = pd.read_csv(input_file)
-                        profiles = df[cyto_utils.infer_cp_features(df)]
+                    corr_matrix = np.corrcoef(profiles)
 
-                        corr_matrix = np.corrcoef(profiles)
+                    corr_matrix_df = pd.DataFrame(
+                        corr_matrix,
+                        columns=list(df.Metadata_Well),
+                        index=list(df.Metadata_Well),
+                    )
 
-                        corr_matrix_df = pd.DataFrame(
-                            corr_matrix,
-                            columns=list(df.Metadata_Well),
-                            index=list(df.Metadata_Well),
+                    fig = px.imshow(
+                        corr_matrix_df, color_continuous_scale="BlueRed"
+                    )
+                    fig.update_layout(
+                        title=f"Plate: {plate}, Correlation all vs. all",
+                        xaxis=dict(title="Wells"),
+                        yaxis=dict(title="Wells"),
+                    )
+                    output_file = (
+                        f"{output_dir}/{batch}/{plate}/{plate}_correlation.png"
+                    )
+                    fig.write_image(output_file, width=640, height=480, scale=2)
+
+                    corr_df = (
+                        corr_matrix_df.stack()
+                        .reset_index()
+                        .rename(
+                            columns={
+                                "level_0": "Well_Row",
+                                "level_1": "Well_Col",
+                                0: "correlation",
+                            }
+                        )
+                        .assign(Row=lambda x: x.Well_Row.str[0:1])
+                        .assign(Col=lambda x: x.Well_Row.str[1:])
+                    )
+
+                    corr_df["same_row_col"] = corr_df.apply(
+                        lambda x: str(x.Row) in str(x.Well_Col)
+                        or str(x.Col) in str(x.Well_Col),
+                        axis=1,
+                    )
+
+                    wells = list(df.Metadata_Well)
+                    table_df = pd.DataFrame()
+
+                    for well in wells:
+                        signal = list(
+                            corr_df.loc[
+                                (corr_df.Well_Row == well) & (corr_df.same_row_col)
+                            ]["correlation"]
+                        )
+                        null = list(
+                            corr_df.loc[
+                                (corr_df.Well_Row == well)
+                                & (corr_df.same_row_col == False)
+                            ]["correlation"]
                         )
 
-                        fig = px.imshow(
-                            corr_matrix_df, color_continuous_scale="BlueRed"
-                        )
-                        fig.update_layout(
-                            title=f"Plate: {plate}, Correlation all vs. all",
-                            xaxis=dict(title="Wells"),
-                            yaxis=dict(title="Wells"),
-                        )
-                        output_file = (
-                            f"{output_dir}/{batch}/{plate}/{plate}_correlation.png"
-                        )
-                        fig.write_image(output_file, width=640, height=480, scale=2)
+                        perc_95 = np.nanpercentile(null, 95)
+                        above_threshold = signal > perc_95
+                        value = np.mean(above_threshold.astype(float))
 
-                        corr_df = (
-                            corr_matrix_df.stack()
-                            .reset_index()
-                            .rename(
-                                columns={
-                                    "level_0": "Well_Row",
-                                    "level_1": "Well_Col",
-                                    0: "correlation",
-                                }
-                            )
-                            .assign(Row=lambda x: x.Well_Row.str[0:1])
-                            .assign(Col=lambda x: x.Well_Row.str[1:])
+                        table_df = table_df.append(
+                            {
+                                "Metadata_Row": well[0:1],
+                                "Metadata_Col": well[1:],
+                                "value": value,
+                            },
+                            ignore_index=True,
                         )
 
-                        corr_df["same_row_col"] = corr_df.apply(
-                            lambda x: str(x.Row) in str(x.Well_Col)
-                            or str(x.Col) in str(x.Well_Col),
-                            axis=1,
-                        )
+                    df_pivot = table_df.pivot(
+                        "Metadata_Row", "Metadata_Col", "value"
+                    )
 
-                        wells = list(df.Metadata_Well)
-                        table_df = pd.DataFrame()
+                    fig = px.imshow(df_pivot, color_continuous_scale="blues")
+                    fig.update_layout(
+                        title=f"Plate: {plate}, Position effect",
+                        xaxis=dict(title="", side="top"),
+                        yaxis=dict(title=""),
+                    )
+                    fig.update_traces(xgap=1, ygap=1)
 
-                        for well in wells:
-                            signal = list(
-                                corr_df.loc[
-                                    (corr_df.Well_Row == well) & (corr_df.same_row_col)
-                                ]["correlation"]
-                            )
-                            null = list(
-                                corr_df.loc[
-                                    (corr_df.Well_Row == well)
-                                    & (corr_df.same_row_col == False)
-                                ]["correlation"]
-                            )
-
-                            perc_95 = np.nanpercentile(null, 95)
-                            above_threshold = signal > perc_95
-                            value = np.mean(above_threshold.astype(float))
-
-                            table_df = table_df.append(
-                                {
-                                    "Metadata_Row": well[0:1],
-                                    "Metadata_Col": well[1:],
-                                    "value": value,
-                                },
-                                ignore_index=True,
-                            )
-
-                        df_pivot = table_df.pivot(
-                            "Metadata_Row", "Metadata_Col", "value"
-                        )
-
-                        fig = px.imshow(df_pivot, color_continuous_scale="blues")
-                        fig.update_layout(
-                            title=f"Plate: {plate}, Position effect",
-                            xaxis=dict(title="", side="top"),
-                            yaxis=dict(title=""),
-                        )
-                        fig.update_traces(xgap=1, ygap=1)
-
-                        output_file = (
-                            f"{output_dir}/{batch}/{plate}/{plate}_position_effect.png"
-                        )
-                        fig.write_image(output_file, width=640, height=480, scale=2)
+                    output_file = (
+                        f"{output_dir}/{batch}/{plate}/{plate}_position_effect.png"
+                    )
+                    fig.write_image(output_file, width=640, height=480, scale=2)
