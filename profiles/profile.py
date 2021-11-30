@@ -180,6 +180,7 @@ class RunPipeline(object):
 
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
+        fudge_factor = normalize_steps["mad_robustize_fudge_factor"]
         image_features = normalize_steps["image_features"]
 
         if normalization_features == "infer" and self.noncanonical:
@@ -196,6 +197,7 @@ class RunPipeline(object):
             output_file=normalize_output_file,
             compression_options=self.pipeline_options["compression"],
             float_format=self.pipeline_options["float_format"],
+            mad_robustize_epsilon=fudge_factor,
         )
 
     def pipeline_feature_select(self, steps, suffix=None):
