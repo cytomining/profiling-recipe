@@ -180,7 +180,7 @@ class RunPipeline(object):
 
         normalization_features = normalize_steps["features"]
         normalization_method = normalize_steps["method"]
-        fudge_factor = normalize_steps["mad_robustize_fudge_factor"]
+        fudge_factor = float(normalize_steps["mad_robustize_fudge_factor"])
         image_features = normalize_steps["image_features"]
 
         if normalization_features == "infer" and self.noncanonical:
