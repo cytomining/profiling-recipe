@@ -576,14 +576,9 @@ class RunPipeline(object):
 
                     df = pd.read_csv(input_file)
                     profiles = df[cyto_utils.infer_cp_features(df)]
+                    profiles_df = pd.DataFrame(profiles.values.T, columns=df.Metadata_Well.values)
 
-                    corr_matrix = np.corrcoef(profiles)
-
-                    corr_matrix_df = pd.DataFrame(
-                        corr_matrix,
-                        columns=list(df.Metadata_Well),
-                        index=list(df.Metadata_Well),
-                    )
+                    corr_matrix_df = profiles_df.corr()
 
                     fig = px.imshow(
                         corr_matrix_df, color_continuous_scale="BlueRed"
