@@ -337,7 +337,7 @@ fields:
   - 9
 ```
 
-Additionally, to add image features to the profiles, list the feature categories to the parameter `image_feature_categories`. For example
+Additionally, to add whole image features to the profiles, list the feature categories to the parameter `image_feature_categories`. For example
 
 ```yaml
 image_feature_catageories:
@@ -373,11 +373,15 @@ normalize:
   perform: true
   method: mad_robustize
   features: infer
+  mad_robustize_fudge_factor: 0
+  image_features: true
 ```
 
 - `perform` - Whether to perform normalization. Default is `true`. Set to `false` if this should not be performed.
 - `method` - Which method to use for normalization. Default is `mad_robustize`. Other options are available in pycytominer, such as, `standardize`, `robustize` and `spherize`.
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the annotated profiles.
+- `mad_robustize_fudge_factor` - The fudge factor parameter if normalization method is `mad_robustize`.
+- `image_features`: Whether whole image features are present in the annotated profiles. Default is `true`. Set to `false` if image features are not present.
 
 ### `normalize_negcon` parameters
 These are parameters that are processed by the `pipeline_normalize()` function that interacts with `pycytominer.normalize()` and normalizes all the wells to the negative control.
@@ -387,21 +391,25 @@ normalize_negcon:
   perform: true
   method: mad_robustize
   features: infer
+  mad_robustize_fudge_factor: 0
+  image_features: true
 ```
 
 - `perform` - Whether to perform normalization. Default is `true`. Set to `false` if this should not be performed.
 - `method` - Which method to use for normalization. Default is `mad_robustize`. Other options are available in pycytominer, such as, `standardize`, `robustize` and `spherize`.
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the annotated profiles.
+- `mad_robustize_fudge_factor` - The fudge factor parameter if normalization method is `mad_robustize`.
+- `image_features`: Whether whole image features are present in the annotated profiles. Default is `true`. Set to `false` if image features are not present.
 
 ## `feature_select` parameters
 These are parameters that are processed by the `pipeline_feature_select()` function that interacts with `pycytominer.feature_select()` and selects features in the whole-plate normalized profiles.
 
 ```yaml
-feature_select:
   perform: true
   features: infer
   level: batch
   gct: false
+  image_features: true
   operations:
     - variance_threshold
     - correlation_threshold
@@ -413,6 +421,7 @@ feature_select:
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
 - `level` - Level at which feature selection should be performed. Default is `batch`. Feature selection can also be performed at `batch` and `all` plates level.
 - `gct` - Whether to create batch level stacked profile and a `.gct` file. Default is `false`. Stacked profiles and `.gct` files are created only when `level` is `batch` or `all`.
+- `image_features`: Whether whole image features are present in the whole plate normalized profiles. Default is `true`. Set to `false` if image features are not present.
 - `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the threshold, across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
 ### `feature_select_negcon` parameters
@@ -424,6 +433,7 @@ feature_select_negcon:
   features: infer
   level: batch
   gct: false
+  image_features: true
   operations:
     - variance_threshold
     - correlation_threshold
@@ -435,6 +445,7 @@ feature_select_negcon:
 - `features` - Names of the feature measurement columns. Default is `infer`, which infers CellProfiler features from the normalized profiles.
 - `level` - Level at which feature selection should be performed. Default is `batch`. Feature selection can also be performed at `batch` and `all` plates level.
 - `gct` - Whether to create batch level stacked profile and a `.gct` file. Default is `false`. Stacked profiles and `.gct` files are created only when `level` is `batch` or `all`.
+- `image_features`: Whether whole image features are present in the negcon normalized profiles. Default is `true`. Set to `false` if image features are not present.
 - `operations` - List of feature selection operations. `variance_threshold` removes features that have a variance under the threshold, across all the wells on a plate. `correlation_threshold` removes redundant features. `drop_na_columns` removes features with `NaN` values. `blocklist` removes features that are a part of the feature blocklist.
 
 ## `quality_control` parameters

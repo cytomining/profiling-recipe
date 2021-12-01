@@ -26,11 +26,13 @@ normalize:
   perform: true
   method: mad_robustize
   features: infer
+  mad_robustize_fudge_factor: 0
   image_features: true
 normalize_negcon:
   perform: true
   method: mad_robustize
   features: infer
+  mad_robustize_fudge_factor: 0
   image_features: true
 feature_select:
   perform: true
@@ -56,9 +58,12 @@ feature_select_negcon:
     - blocklist
 quality_control:
   perform: true
-  operations:
-    - summary
-    - heatmap
+  summary:
+    perform: true
+    row: Metadata_Row
+    column: Metadata_Col
+  heatmap:
+    perform : true
 options:
   compression: gzip
   float_format: "%.5g"
