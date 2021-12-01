@@ -422,6 +422,7 @@ class RunPipeline(object):
             os.mkdir(qc_dir)
 
         if operations["summary"]["perform"]:
+            print(f"Now generating summary")
             row = operations["summary"]["row"]
             column = operations["summary"]["column"]
             output_dir = pathlib.PurePath(".", "quality_control", "summary")
@@ -474,6 +475,7 @@ class RunPipeline(object):
             summary[summary_column_order].to_csv(output_file, sep="\t", index=False)
 
         if operations["heatmap"]["perform"]:
+            print(f"Now generating heatmaps")
             output_dir = pathlib.PurePath(".", "quality_control", "heatmap")
             if not os.path.isdir(pathlib.PurePath(output_dir)):
                 os.mkdir(output_dir)
