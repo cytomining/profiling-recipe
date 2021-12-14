@@ -454,13 +454,34 @@ These parameters specify the type of quality control metrics and figures to gene
 ```yaml
 quality_control:
   perform: true
-  operations:
-    - summary
-    - heatmap
+  summary:
+    perform: true
+    row: Metadata_Row
+    column: Metadata_Col
+  heatmap:
+    perform : true
+```
+- `perform` - Whether to generate quality control metrics or figures. Default is `true`. Set to `false` if these should not be generated.
+
+There are two different types of qc metrics that can be generated. `summary` creates `summary.tsv` with summary statistics of each plate from each batch. `heatmap` generates three heatmaps - cell count vs. platemap, correlation between the wells and position effect vs. platemap.
+
+```yaml
+summary:
+  perform: true
+  row: Metadata_Row
+  column: Metadata_Col
 ```
 
-- `perform` - Whether to generate quality control metrics or figures. Default is `true`. Set to `false` if these should not be generated.
-- `operations` - List of different qc metrics of figures to generate.
+- `perform` - Whether or not to generate the summary file. Default is `true`. Set to `false` if this file should not be generated.
+- `row` - Row name field in `load_data.csv`.
+- `column` - Column name field `load_data.csv`.
+
+```yaml
+heatmap:
+  perform : true
+```
+
+- `perform` - Whether or not to generate heatmaps. Default is `true`. Set to `false` if heatmaps should not be generated.
 
 ## `batch` and `plates` parameters
 These parameters specify the name of the batch and plate to process. 
