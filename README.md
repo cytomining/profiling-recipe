@@ -1,7 +1,7 @@
 # Image-based Profiling Recipe
 
 # Description
-The profiling-recipe is a collection of scripts that primarily use [pycytominer](https://github.com/cytomining/pycytominer) functions to [process single-cell morphological profiles](https://github.com/cytomining/pycytominer/blob/master/media/pipeline.png). The three scripts are 
+The profiling-recipe is a collection of scripts that primarily use [pycytominer](https://github.com/cytomining/pycytominer) functions to [process single-cell morphological profiles](https://github.com/cytomining/pycytominer/blob/master/media/pipeline.png). The three scripts are
 - `profiling-pipeline.py` - runs the image-based profile processing pipeline
 - `csv2gz.py` - compresses `.csv` files
 - `create_dirs.sh` - creates the subdirectories to store the output of the processing pipeline
@@ -11,8 +11,20 @@ The profiling-recipe is a collection of scripts that primarily use [pycytominer]
 ### Anaconda
 We use Anaconda as our package manager. Install Miniconda following the instructions [here](https://docs.conda.io/en/latest/miniconda.html).
 
-### Git LFS
-We use Git LFS for storing and versioning large files. It can be installed following the instructions [here](https://git-lfs.github.com/).
+### AWS CLI
+We use AWS S3 storage tracked by DVC for large file management. Install AWS CLI following the instructions [here](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). After installation, configure your AWS CLI installation with
+```bash
+aws configure
+```
+It will prompt you for:  
+`AWS Access Key ID:`  YOUR-KEY
+`AWS Secret Access Key:`  YOUR-SECRET-KEY
+`Default region name:` e.g. us-east-1  
+`Default output format:` json
+
+Note that the profile that you enter must have permission to upload to the bucket that you set later.
+
+If you do not want to store/version large files separately, you can skip AWS CLI installation.
 
 ### System requirements
 If the profiling pipeline is used for aggregating the single cell profiles, we recommend running the pipeline on a system with a memory at least twice the size of the `.sqlite` files. If the pipeline will be used only for running steps that are downstream of aggregation, then it can be run on a local machine.  
@@ -150,6 +162,22 @@ conda env create --force --file environment.yml
 conda activate profiling
 ```
 
+## Setting up DVC
+
+Initialize DVC for this project and set it to store large files in S3. Skip this step if not using DVC.
+
+```bash
+# Navigate
+cd ~/work/projects/${PROJECT_NAME}/workspace/software/<data_repo>/profiling-recipe
+# Initialize DVC
+dvc init
+# Set up remote storage
+dvc remote add -d S3storage s3://<bucket>/projects/${PROJECT_NAME}/workspace/software/<data_repo>_DVC
+# Commit new files to git
+git add .dvc/.gitignore .dvc/config
+git commit -m "Setup DVC"
+```
+
 ## Create the directories
 The directories that will contain the output of the pipeline are created as follows
 
@@ -172,7 +200,7 @@ plate1,platemap
 plate2,platemap
 ```
 
-[Here](https://github.com/jump-cellpainting/JUMP-Target/blob/master/JUMP-Target-1_compound_platemap.tsv) is an example plate map file and [here](https://github.com/jump-cellpainting/JUMP-Target/blob/master/JUMP-Target-1_compound_metadata.tsv) is an example external metadata file. 
+[Here](https://github.com/jump-cellpainting/JUMP-Target/blob/master/JUMP-Target-1_compound_platemap.tsv) is an example plate map file and [here](https://github.com/jump-cellpainting/JUMP-Target/blob/master/JUMP-Target-1_compound_metadata.tsv) is an example external metadata file.
 
 These files should be added to the appropriate folder so that the folder structure looks as below
 
@@ -225,7 +253,19 @@ If there are multiple config files, each one of them can be run one after the ot
 *Note: Each step in the profiling pipeline, uses the output from the previous step as its input. Therefore, make sure that all the necessary input files have been generated before running the steps in the profiling pipeline. It is possible to run only a few steps in the pipeline by keeping only those steps in the config file.*
 
 ## Push the profiles to GitHub
-If using a data repository, push the newly created profiles to GitHub as follows
+If using a data repository, push the newly created profiles to DVC and the .dvc files and other files to GitHub as follows
+
+```bash
+dvc add profiles/${BATCH}
+dvc push
+git add profiles/${BATCH}.dvc profiles/.gitignore
+git commit -m 'add profiles'
+git add *
+git commit -m 'add files made in profiling'
+git push
+```
+
+If not using DVC but using a data repository, push all new files to GitHub as follows
 
 ```bash
 git add *
@@ -236,23 +276,23 @@ git push
 # Files generated
 Running the profiling workflow with all the steps included generates the following files
 
-| Filename                                                  | Description                                                                                                             |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `<PLATE>.csv.gz`                                          | Aggregated well-level profiles                                                                                          |
-| `<PLATE>_augmented.csv.gz`                                | Metadata annotated profiles                                                                                             |
-| `<PLATE>_normalized.csv.gz`                               | Profiles normalized to the whole plate                                                                                  |
-| `<PLATE>_normalized_negcon.csv.gz `                       | Profiles normalized to the negative control                                                                             |
-| `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz`        | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level                |
-| `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level           |
-| `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz`        | Batch level stacked whole plate normalized profiles that are feature selected at the `batch` or `all plates` level      |
-| `<BATCH>_normalized_feature_select_<LEVEL>.gct`           | `.gct` file created from the `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` file                                    |
-| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked negative control normalized profiles that are feature selected at the `batch` or `all plates` level |
-| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.gct`    | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file                             |
-| `summary.tsv`                                             | Summary statistics                                                                                                      |
-| `<PLATE>_cell_count.png`                                  | Plate cell count                                                                                                        |
-| `<PLATE>_correlation.png`                                 | Pairwise correlation between all the wells on a plate                                                                   |
-| `<PLATE>_position_effect.png`                             | Percent Matching between each well and other wells in the same row and column                                           |
-	
+| Filename | Description | Location |
+| --- | --- | --- |
+| `<PLATE>.csv.gz` | Aggregated well-level profiles | profiles/BATCH/PLATE |
+| `<PLATE>_augmented.csv.gz` | Metadata annotated profiles | profiles/BATCH/PLATE |
+| `<PLATE>_normalized.csv.gz` | Profiles normalized to the whole plate | profiles/BATCH/PLATE |
+| `<PLATE>_normalized_negcon.csv.gz ` | Profiles normalized to the negative control | profiles/BATCH/PLATE |
+| `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz` | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level | profiles/BATCH/PLATE |
+| `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level | profiles/BATCH/PLATE |
+| `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` | Batch level stacked whole plate normalized profiles that are feature selected at the `batch` or `all plates` level | ? |
+| `<BATCH>_normalized_feature_select_<LEVEL>.gct` | `.gct` file created from the `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` file | ? |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked negative control normalized profiles that are feature selected at the `batch` or `all plates` level | ? |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.gct` | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file | ? |
+| `summary.tsv` | Summary statistics | quality_control/summary |
+| `<PLATE>_cell_count.png` | Plate cell count | quality_control/heatmap/BATCH/PLATE |
+| `<PLATE>_correlation.png` | Pairwise correlation between all the wells on a plate | quality_control/heatmap/BATCH/PLATE |
+| `<PLATE>_position_effect.png` | Percent Matching between each well and other wells in the same row and column | quality_control/heatmap/BATCH/PLATE |
+
 # Config file
 ## Pipeline parameters
 These are the parameters that all pipelines will require
@@ -308,8 +348,8 @@ options:
   samples: all
 ```
 
-- `compression` - The compression format for the profile `.csv`s. Default is `gzip` which is currently the only accepted value. 
-- `float_format` - The number of significant digits. 
+- `compression` - The compression format for the profile `.csv`s. Default is `gzip` which is currently the only accepted value.
+- `float_format` - The number of significant digits.
 - `samples` - Whether to perform the following operations on all or a subset of samples. Default is  `all` which is currently the only accepted value.
 
 ## `aggregate` parameters
@@ -463,7 +503,7 @@ quality_control:
 - `operations` - List of different qc metrics of figures to generate.
 
 ## `batch` and `plates` parameters
-These parameters specify the name of the batch and plate to process. 
+These parameters specify the name of the batch and plate to process.
 
 ```yaml
 batch: <BATCH NAME>
@@ -479,10 +519,44 @@ process: true
 	- `process` - Whether to process the plate. Default is `true`. Set to `false` if this plate should not be processed.
 - `process` - Whether to process the batch. Default is `true`. Set to `false` if this batch should not be processed.
 
-# Rerunning the pipeline 
-- The instructions in this README assumes that the profiling pipeline is being run for the first time within the data repository. It is possible that you are rerunning the pipeline with a new config file in a repository that already contains profiles. In that case, after cloning the data repository, it is important to download the profiling-recipe submodule anddownload the profiles from Git LFS before running the pipeline. This can be done using the following commands
+# Rerunning the pipeline
+- The instructions in this README assumes that the profiling pipeline is being run for the first time within the data repository. It is possible that you are rerunning the pipeline with a new config file in a repository that already contains profiles. In that case, after cloning the data repository, it is important to download the profiling-recipe submodule and download the profiles from DVC before running the pipeline. This can be done using the following commands
 
 ```bash
 git submodule update --init --recursive
-git lfs pull
+dvc pull
 ```
+
+# Using DVC
+Additional information about using DVC that you may find useful:  
+When handling large files or a large folder, do NOT add them to GH with `git add`. Instead, add them to DVC with `dvc add`.
+This uploads the large file/folder to S3 and creates a pointer to that upload on S3 in the GH repo (that we track instead of the file/folder itself).
+It also updates .gitignore so that GH doesn't track the large file/folder itself.
+Then `dvc push` to upload the files to S3.
+
+```bash
+# Add a file or folder to DVC
+dvc add LARGEFILE.csv
+dvc push
+```
+Then add the .dvc version of the file/folder that is created to github along with the .gitignore. Commit.
+```bash
+git add LARGEFILE.csv.dvc
+git add .gitignore
+git commit -m "add largefile"
+```
+
+## Download data stored by DVC in S3:
+ ```bash
+# Download ALL data stored by DVC in S3
+# Only do this if you really, truly want ALL the data
+ dvc pull
+ ```
+ ```bash
+ # Download a specific file stored by DVC in S3
+ dvc get https://github.com/ORGANIZATION/DATA-REPO.git LARGEFILE.csv
+ ```
+DVC makes files names into hashes in S3. To see the file hash (so you can find it directly on S3) for any given DVC file add the --show-url flag to the `get` command:
+  ```bash
+  dvc get --show-url https://github.com/ORGANIZATION/DATA-REPO.git LARGEFILE.csv
+  ```
