@@ -24,7 +24,7 @@ It will prompt you for:
 
 Note that the profile that you enter must have permission to upload to the bucket that you set later.
 
-If you do not want to store/version large files separately, you can skip AWS CLI installation.
+If you do not want to store/version large files on AWS, you can skip AWS CLI installation.
 
 ### System requirements
 If the profiling pipeline is used for aggregating the single cell profiles, we recommend running the pipeline on a system with a memory at least twice the size of the `.sqlite` files. If the pipeline will be used only for running steps that are downstream of aggregation, then it can be run on a local machine.  
@@ -164,7 +164,9 @@ conda activate profiling
 
 ## Setting up DVC
 
-Initialize DVC for this project and set it to store large files in S3. Skip this step if not using DVC.
+Initialize DVC for this project and set it to store large files in S3.
+Skip this step if not using DVC.
+If you would like to use DVC for a remote storage location that is not S3, find instructions [here](https://dvc.org/doc/command-reference/remote).
 
 ```bash
 # Navigate
