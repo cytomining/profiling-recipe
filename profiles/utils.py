@@ -96,6 +96,6 @@ def concat_dataframes(main_df, df):
         main_df = df.copy()
     else:
         frame = [main_df, df]
-        main_df = pd.concat(frame, ignore_index=True, join="inner")
+        main_df = pd.concat(frame, ignore_index=True)
 
     return main_df
