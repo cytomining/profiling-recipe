@@ -255,7 +255,7 @@ class RunPipeline(object):
                         float_format=self.pipeline_options["float_format"],
                     )
                 elif level == "batch":
-                    batch_df = concat_dataframes(batch_df, df)
+                    batch_df = concat_dataframes(batch_df, df, image_features)
                 elif level == "all":
                     all_plates_df = concat_dataframes(all_plates_df, df)
 

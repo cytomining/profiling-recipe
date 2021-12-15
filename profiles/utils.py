@@ -4,7 +4,7 @@
 import yaml
 import os
 import pathlib
-from pycytominer.cyto_utils import get_default_linking_cols
+from pycytominer.cyto_utils import get_default_linking_cols, infer_cp_features
 import pandas as pd
 
 
@@ -91,11 +91,14 @@ def get_pipeline_options(pipeline):
     return pipeline_options
 
 
-def concat_dataframes(main_df, df):
+def concat_dataframes(main_df, df, image_features):
     if main_df.shape[0] == 0:
         main_df = df.copy()
     else:
         frame = [main_df, df]
         main_df = pd.concat(frame, ignore_index=True)
+        metadata_cols = infer_cp_features(main_df, metadata=True)
+        feature_cols = infer_cp_features(main_df, image_features=image_features)
+        main_df = main_df.reindex(columns=metadata_cols + feature_cols)
 
     return main_df
