@@ -258,9 +258,9 @@ If there are multiple config files, each one of them can be run one after the ot
 If using a data repository, push the newly created profiles to DVC and the .dvc files and other files to GitHub as follows
 
 ```bash
-dvc add profiles/${BATCH}
+dvc add profiles/${BATCH} --recursive
 dvc push
-git add profiles/${BATCH}.dvc profiles/.gitignore
+git add profiles/${BATCH}/*.dvc profiles/*.gitignore
 git commit -m 'add profiles'
 git add *
 git commit -m 'add files made in profiling'
