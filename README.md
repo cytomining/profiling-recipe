@@ -286,10 +286,10 @@ Running the profiling workflow with all the steps included generates the followi
 | `<PLATE>_normalized_negcon.csv.gz ` | Profiles normalized to the negative control | profiles/BATCH/PLATE |
 | `<PLATE>_normalized_feature_select_<LEVEL>.csv.gz` | Whole plate normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level | profiles/BATCH/PLATE |
 | `<PLATE>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Negative control normalized profiles that are feature selected at the `plate`,  `batch` or `all plates` level | profiles/BATCH/PLATE |
-| `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` | Batch level stacked whole plate normalized profiles that are feature selected at the `batch` or `all plates` level | ? |
-| `<BATCH>_normalized_feature_select_<LEVEL>.gct` | `.gct` file created from the `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` file | ? |
-| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked negative control normalized profiles that are feature selected at the `batch` or `all plates` level | ? |
-| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.gct` | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file | ? |
+| `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` | Batch level stacked whole plate normalized profiles that are feature selected at the `batch` or `all plates` level | gct/BATCH |
+| `<BATCH>_normalized_feature_select_<LEVEL>.gct` | `.gct` file created from the `<BATCH>_normalized_feature_select_<LEVEL>.csv.gz` file | gct/BATCH |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` | Batch level stacked negative control normalized profiles that are feature selected at the `batch` or `all plates` level | gct/BATCH |
+| `<BATCH>_normalized_feature_select_negcon_<LEVEL>.gct` | `.gct` file created from the `<BATCH>_normalized_feature_select_negcon_<LEVEL>.csv.gz` file | gct/BATCH |
 | `summary.tsv` | Summary statistics | quality_control/summary |
 | `<PLATE>_cell_count.png` | Plate cell count | quality_control/heatmap/BATCH/PLATE |
 | `<PLATE>_correlation.png` | Pairwise correlation between all the wells on a plate | quality_control/heatmap/BATCH/PLATE |
