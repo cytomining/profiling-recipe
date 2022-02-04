@@ -560,5 +560,5 @@ git commit -m "add largefile"
  ```
 DVC makes files names into hashes in S3. To see the file hash (so you can find it directly on S3) for any given DVC file add the --show-url flag to the `get` command:
   ```bash
-  dvc get --show-url https://github.com/ORGANIZATION/DATA-REPO.git LARGEFILE.csv
+  dvc get --show-url https://github.com/ORGANIZATION/DATA-REPO.git relative/path/to/LARGEFILE.csv
   ```
