@@ -17,8 +17,8 @@ We use AWS S3 storage tracked by DVC for large file management. Install AWS CLI 
 aws configure
 ```
 It will prompt you for:  
-`AWS Access Key ID:`  YOUR-KEY
-`AWS Secret Access Key:`  YOUR-SECRET-KEY
+`AWS Access Key ID:`  YOUR-KEY  
+`AWS Secret Access Key:`  YOUR-SECRET-KEY  
 `Default region name:` e.g. us-east-1  
 `Default output format:` json
 
