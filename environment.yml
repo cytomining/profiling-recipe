@@ -5,6 +5,7 @@ dependencies:
 - conda-forge::pip=19.2.2
 - conda-forge::pyyaml=5.3.1
 - conda-forge::plotly=4.14.3
+- conda-forge::dvc-s3
 - plotly::python-kaleido=0.0.3
 - pip
 - pip:
