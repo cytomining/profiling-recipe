@@ -170,7 +170,7 @@ If you would like to use DVC for a remote storage location that is not S3, find 
 
 ```bash
 # Navigate
-cd ~/work/projects/${PROJECT_NAME}/workspace/software/<data_repo>/profiling-recipe
+cd ~/work/projects/${PROJECT_NAME}/workspace/software/<data_repo>
 # Initialize DVC
 dvc init
 # Set up remote storage
