@@ -170,7 +170,7 @@ If you would like to use DVC for a remote storage location that is not S3, find 
 
 ```bash
 # Navigate
-cd ~/work/projects/${PROJECT_NAME}/workspace/software/<data_repo>/profiling-recipe
+cd ~/work/projects/${PROJECT_NAME}/workspace/software/<data_repo>
 # Initialize DVC
 dvc init
 # Set up remote storage
@@ -260,7 +260,7 @@ If using a data repository, push the newly created profiles to DVC and the .dvc 
 ```bash
 dvc add profiles/${BATCH} --recursive
 dvc push
-git add profiles/${BATCH}/*.dvc profiles/*.gitignore
+git add profiles/${BATCH}/*/*.dvc profiles/${BATCH}/*/*.gitignore
 git commit -m 'add profiles'
 git add *
 git commit -m 'add files made in profiling'
