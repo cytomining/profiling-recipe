@@ -167,6 +167,7 @@ conda activate profiling
 Initialize DVC for this project and set it to store large files in S3.
 Skip this step if not using DVC.
 If you would like to use DVC for a remote storage location that is not S3, find instructions [here](https://dvc.org/doc/command-reference/remote).
+If you have multiple AWS profiles on your machine and do not want to use the default one for DVC, you can specify which profile to use by running `dvc remote modify S3storage profile PROFILE_NAME` at any point between adding the remote and performing the final DVC push. 
 
 ```bash
 # Navigate
