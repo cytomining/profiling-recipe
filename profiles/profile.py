@@ -257,7 +257,7 @@ class RunPipeline(object):
                 elif level == "batch":
                     batch_df = concat_dataframes(batch_df, df, image_features)
                 elif level == "all":
-                    all_plates_df = concat_dataframes(all_plates_df, df)
+                    all_plates_df = concat_dataframes(all_plates_df, df, image_features)
 
             if level == "batch":
                 fs_df = feature_select(
