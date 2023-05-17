@@ -18,6 +18,7 @@ import plotly.express as px
 from pycytominer.cyto_utils.cells import SingleCells
 from pycytominer.cyto_utils import (
     get_default_compartments,
+    output,
     write_gct,
 )
 from pycytominer import (
@@ -187,18 +188,40 @@ class RunPipeline(object):
             normalization_features = cyto_utils.infer_cp_features(
                 pd.read_csv(annotate_output_file), compartments=self.compartments
             )
-
-        normalize(
-            profiles=annotate_output_file,
-            features=normalization_features,
-            image_features=image_features,
-            samples=samples,
-            method=normalization_method,
-            output_file=normalize_output_file,
-            compression_options=self.pipeline_options["compression"],
-            float_format=self.pipeline_options["float_format"],
-            mad_robustize_epsilon=fudge_factor,
-        )
+        if "subgroups" in normalize_steps.keys() and normalize_steps["subgroups"]:
+            profile_df = pd.read_csv(annotate_output_file)
+            normed_df = (
+                profile_df
+                .groupby(normalize_steps["subgroup_col"], group_keys=False)
+                .apply(
+                lambda x:normalize(
+                        profiles=x,
+                        features=normalization_features,
+                        image_features=image_features,
+                        samples=samples,
+                        method=normalization_method,
+                        float_format=self.pipeline_options["float_format"],
+                        mad_robustize_epsilon=fudge_factor,
+                        )
+                    )
+                    )
+            output(
+                normed_df,
+                output_filename=normalize_output_file,
+                compression_options=self.pipeline_options["compression"]
+                )
+        else:
+            normalize(
+                profiles=annotate_output_file,
+                features=normalization_features,
+                image_features=image_features,
+                samples=samples,
+                method=normalization_method,
+                output_file=normalize_output_file,
+                compression_options=self.pipeline_options["compression"],
+                float_format=self.pipeline_options["float_format"],
+                mad_robustize_epsilon=fudge_factor,
+            )
 
     def pipeline_feature_select(self, steps, suffix=None):
         feature_select_steps = steps
