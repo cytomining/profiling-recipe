@@ -49,6 +49,7 @@ feature_select:
     - correlation_threshold
     - drop_na_columns
     - blocklist
+  subgroups: false
 feature_select_negcon:
   perform: true
   features: infer
@@ -60,6 +61,7 @@ feature_select_negcon:
     - correlation_threshold
     - drop_na_columns
     - blocklist
+  subgroups: false
 quality_control:
   perform: true
   summary:
