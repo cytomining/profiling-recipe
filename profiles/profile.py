@@ -207,21 +207,20 @@ class RunPipeline(object):
                     )
             output(
                 normed_df,
-                output_filename=normalize_output_file,
+                output_filename=pathlib.PurePath(output_dir, f"{plate}_subgroup_normalized.csv.gz"),
                 compression_options=self.pipeline_options["compression"]
                 )
-        else:
-            normalize(
-                profiles=annotate_output_file,
-                features=normalization_features,
-                image_features=image_features,
-                samples=samples,
-                method=normalization_method,
-                output_file=normalize_output_file,
-                compression_options=self.pipeline_options["compression"],
-                float_format=self.pipeline_options["float_format"],
-                mad_robustize_epsilon=fudge_factor,
-            )
+        normalize(
+            profiles=annotate_output_file,
+            features=normalization_features,
+            image_features=image_features,
+            samples=samples,
+            method=normalization_method,
+            output_file=normalize_output_file,
+            compression_options=self.pipeline_options["compression"],
+            float_format=self.pipeline_options["float_format"],
+            mad_robustize_epsilon=fudge_factor,
+        )
 
     def pipeline_feature_select(self, steps, suffix=None):
         feature_select_steps = steps
@@ -234,9 +233,11 @@ class RunPipeline(object):
         image_features = feature_select_steps["image_features"]
 
         all_plates_df = pd.DataFrame()
+        sub_all_plates_df = pd.DataFrame()
 
         for batch in self.profile_config:
             batch_df = pd.DataFrame()
+            sub_batch_df = pd.DataFrame()
             for plate in self.profile_config[batch]:
                 output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
                 if suffix:
@@ -245,7 +246,14 @@ class RunPipeline(object):
                     )
                     feature_select_output_file_plate = pathlib.PurePath(
                         output_dir,
-                        f"{plate}_normalized_feature_select_{suffix}_plate.csv.gz",
+                        f"{plate}_subgroup_normalized_feature_select_{suffix}_plate.csv.gz",
+                    )
+                    subgroup_normalize_output_file = pathlib.PurePath(
+                        output_dir, f"{plate}_normalized_{suffix}.csv.gz"
+                    )
+                    subgroup_feature_select_output_file_plate = pathlib.PurePath(
+                        output_dir,
+                        f"{plate}_subgroup_normalized_feature_select_{suffix}_plate.csv.gz",
                     )
                 else:
                     normalize_output_file = pathlib.PurePath(
@@ -253,6 +261,12 @@ class RunPipeline(object):
                     )
                     feature_select_output_file_plate = pathlib.PurePath(
                         output_dir, f"{plate}_normalized_feature_select_plate.csv.gz"
+                    )
+                    subgroup_normalize_output_file = pathlib.PurePath(
+                        output_dir, f"{plate}_subgroup_normalized.csv.gz"
+                    )
+                    subgroup_feature_select_output_file_plate = pathlib.PurePath(
+                        output_dir, f"{plate}_subgroup_normalized_feature_select_plate.csv.gz"
                     )
                 if feature_select_features == "infer" and self.noncanonical:
                     feature_select_features = cyto_utils.infer_cp_features(
@@ -262,6 +276,12 @@ class RunPipeline(object):
 
                 df = (
                     pd.read_csv(normalize_output_file)
+                    .assign(Metadata_batch=batch)
+                    .astype({'Metadata_Plate': str})
+                )
+                if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                    sub_df = (
+                    pd.read_csv(subgroup_normalize_output_file)
                     .assign(Metadata_batch=batch)
                     .astype({'Metadata_Plate': str})
                 )
@@ -277,11 +297,25 @@ class RunPipeline(object):
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
                     )
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        sub_df = sub_df.drop(columns=["Metadata_batch"])
+                        feature_select(
+                            profiles=sub_df,
+                            features=feature_select_features,
+                            image_features=image_features,
+                            operation=feature_select_operations,
+                            output_file=subgroup_feature_select_output_file_plate,
+                            compression_options=self.pipeline_options["compression"],
+                            float_format=self.pipeline_options["float_format"],
+                        )
                 elif level == "batch":
                     batch_df = concat_dataframes(batch_df, df, image_features)
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        sub_batch_df = concat_dataframes(sub_batch_df, sub_df, image_features)
                 elif level == "all":
                     all_plates_df = concat_dataframes(all_plates_df, df, image_features)
-
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        sub_all_plates_df = concat_dataframes(sub_all_plates_df, sub_df, image_features)
             if level == "batch":
                 fs_df = feature_select(
                     profiles=batch_df,
@@ -289,6 +323,13 @@ class RunPipeline(object):
                     image_features=image_features,
                     operation=feature_select_operations,
                 )
+                if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                    sub_fs_df = feature_select(
+                        profiles=sub_batch_df,
+                        features=feature_select_features,
+                        image_features=image_features,
+                        operation=feature_select_operations,
+                    )                   
                 for plate in self.profile_config[batch]:
                     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
                     if suffix:
@@ -296,10 +337,18 @@ class RunPipeline(object):
                             output_dir,
                             f"{plate}_normalized_feature_select_{suffix}_batch.csv.gz",
                         )
+                        sub_feature_select_output_file_batch = pathlib.PurePath(
+                            output_dir,
+                            f"{plate}_subgroup_normalized_feature_select_{suffix}_batch.csv.gz",
+                        )
                     else:
                         feature_select_output_file_batch = pathlib.PurePath(
                             output_dir,
                             f"{plate}_normalized_feature_select_batch.csv.gz",
+                        )
+                        sub_feature_select_output_file_batch = pathlib.PurePath(
+                            output_dir,
+                            f"{plate}_subgroup_normalized_feature_select_batch.csv.gz",
                         )
                     if feature_select_features == "infer" and self.noncanonical:
                         feature_select_features = cyto_utils.infer_cp_features(
@@ -307,11 +356,19 @@ class RunPipeline(object):
                         )
 
                     df = fs_df.query("Metadata_Plate==@plate").reset_index(drop=True)
-                    df = df.drop(columns=["Metadata_batch"])
-
+                    df = df.drop(columns=["Metadata_batch"])                     
                     cyto_utils.output(
                         output_filename=feature_select_output_file_batch,
                         df=df,
+                        compression_options=self.pipeline_options["compression"],
+                        float_format=self.pipeline_options["float_format"],
+                    )
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        sub_df = sub_fs_df.query("Metadata_Plate==@plate").reset_index(drop=True)
+                        sub_df = sub_df.drop(columns=["Metadata_batch"])
+                    cyto_utils.output(
+                        output_filename=sub_feature_select_output_file_batch,
+                        df=sub_df,
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
                     )
@@ -331,6 +388,18 @@ class RunPipeline(object):
                             batch,
                             f"{batch}_normalized_feature_select_{suffix}_batch.gct",
                         )
+                        sub_stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_{suffix}_batch.csv.gz",
+                        )
+                        sub_gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_{suffix}_batch.gct",
+                        )
                     else:
                         stacked_file = pathlib.PurePath(
                             ".",
@@ -344,6 +413,18 @@ class RunPipeline(object):
                             batch,
                             f"{batch}_normalized_feature_select_batch.gct",
                         )
+                        sub_stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_batch.csv.gz",
+                        )
+                        sub_gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_batch.gct",
+                        )
                     cyto_utils.output(
                         output_filename=stacked_file,
                         df=fs_df,
@@ -351,6 +432,14 @@ class RunPipeline(object):
                         float_format=self.pipeline_options["float_format"],
                     )
                     write_gct(profiles=fs_df, output_file=gct_file)
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        cyto_utils.output(
+                            output_filename=sub_stacked_file,
+                            df=sub_fs_df,
+                            compression_options=self.pipeline_options["compression"],
+                            float_format=self.pipeline_options["float_format"],
+                        )
+                        write_gct(profiles=sub_fs_df, output_file=sub_gct_file)                        
 
         if level == "all":
             fs_df = feature_select(
@@ -359,10 +448,21 @@ class RunPipeline(object):
                 image_features=image_features,
                 operation=feature_select_operations,
             )
+            if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                sub_fs_df = feature_select(
+                    profiles=sub_all_plates_df,
+                    features=feature_select_features,
+                    image_features=image_features,
+                    operation=feature_select_operations,
+                )                
             for batch in self.profile_config:
                 fs_batch_df = fs_df.loc[fs_df.Metadata_batch == batch].reset_index(
                     drop=True
                 )
+            if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                sub_fs_batch_df = sub_fs_df.loc[sub_fs_df.Metadata_batch == batch].reset_index(
+                    drop=True
+                )               
                 for plate in self.profile_config[batch]:
                     output_dir = pathlib.PurePath(".", pipeline_output, batch, plate)
                     if suffix:
@@ -370,9 +470,16 @@ class RunPipeline(object):
                             output_dir,
                             f"{plate}_normalized_feature_select_{suffix}_all.csv.gz",
                         )
+                        sub_feature_select_output_file_all = pathlib.PurePath(
+                            output_dir,
+                            f"{plate}_subgroup_normalized_feature_select_{suffix}_all.csv.gz",
+                        )
                     else:
                         feature_select_output_file_all = pathlib.PurePath(
                             output_dir, f"{plate}_normalized_feature_select_all.csv.gz"
+                        )
+                        sub_feature_select_output_file_all = pathlib.PurePath(
+                            output_dir, f"{plate}_subgroup_normalized_feature_select_all.csv.gz"
                         )
                     if feature_select_features == "infer" and self.noncanonical:
                         feature_select_features = cyto_utils.infer_cp_features(
@@ -391,6 +498,17 @@ class RunPipeline(object):
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
                     )
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        sub_df = sub_fs_batch_df.query("Metadata_Plate==@plate").reset_index(
+                            drop=True
+                        )
+                        sub_df = sub_df.drop(columns=["Metadata_batch"])
+                        cyto_utils.output(
+                            output_filename=sub_feature_select_output_file_all,
+                            df=sub_df,
+                            compression_options=self.pipeline_options["compression"],
+                            float_format=self.pipeline_options["float_format"],
+                        )                        
 
                 if gct:
                     create_gct_directories(batch)
@@ -407,6 +525,18 @@ class RunPipeline(object):
                             batch,
                             f"{batch}_normalized_feature_select_{suffix}_all.gct",
                         )
+                        sub_stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_{suffix}_all.csv.gz",
+                        )
+                        sub_gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_{suffix}_all.gct",
+                        )
                     else:
                         stacked_file = pathlib.PurePath(
                             ".",
@@ -420,6 +550,18 @@ class RunPipeline(object):
                             batch,
                             f"{batch}_normalized_feature_select_all.gct",
                         )
+                        sub_stacked_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_all.csv.gz",
+                        )
+                        sub_gct_file = pathlib.PurePath(
+                            ".",
+                            "gct",
+                            batch,
+                            f"{batch}_subgroup_normalized_feature_select_all.gct",
+                        )
                     cyto_utils.output(
                         output_filename=stacked_file,
                         df=fs_batch_df,
@@ -427,7 +569,14 @@ class RunPipeline(object):
                         float_format=self.pipeline_options["float_format"],
                     )
                     write_gct(profiles=fs_batch_df, output_file=gct_file)
-
+                    if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
+                        cyto_utils.output(
+                            output_filename=sub_stacked_file,
+                            df=sub_fs_batch_df,
+                            compression_options=self.pipeline_options["compression"],
+                            float_format=self.pipeline_options["float_format"],
+                        )
+                        write_gct(profiles=sub_fs_batch_df, output_file=sub_gct_file)                       
     def pipeline_quality_control(self, operations):
         pipeline_output = self.pipeline["output_dir"]
 
