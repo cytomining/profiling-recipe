@@ -207,21 +207,20 @@ class RunPipeline(object):
                     )
             output(
                 normed_df,
-                output_filename=normalize_output_file,
+                output_filename=pathlib.PurePath(output_dir, f"{plate}_subgroup_normalized.csv.gz"),
                 compression_options=self.pipeline_options["compression"]
                 )
-        else:
-            normalize(
-                profiles=annotate_output_file,
-                features=normalization_features,
-                image_features=image_features,
-                samples=samples,
-                method=normalization_method,
-                output_file=normalize_output_file,
-                compression_options=self.pipeline_options["compression"],
-                float_format=self.pipeline_options["float_format"],
-                mad_robustize_epsilon=fudge_factor,
-            )
+        normalize(
+            profiles=annotate_output_file,
+            features=normalization_features,
+            image_features=image_features,
+            samples=samples,
+            method=normalization_method,
+            output_file=normalize_output_file,
+            compression_options=self.pipeline_options["compression"],
+            float_format=self.pipeline_options["float_format"],
+            mad_robustize_epsilon=fudge_factor,
+        )
 
     def pipeline_feature_select(self, steps, suffix=None):
         feature_select_steps = steps
