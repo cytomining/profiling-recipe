@@ -28,12 +28,16 @@ normalize:
   features: infer
   mad_robustize_fudge_factor: 0
   image_features: true
+  subgroups: false
+  subgroup_col: <Column to subdivide on>
 normalize_negcon:
   perform: true
   method: mad_robustize
   features: infer
   mad_robustize_fudge_factor: 0
   image_features: true
+  subgroups: false
+  subgroup_col: <Column to subdivide on>
 feature_select:
   perform: true
   features: infer
@@ -45,6 +49,7 @@ feature_select:
     - correlation_threshold
     - drop_na_columns
     - blocklist
+  subgroups: false
 feature_select_negcon:
   perform: true
   features: infer
@@ -56,6 +61,7 @@ feature_select_negcon:
     - correlation_threshold
     - drop_na_columns
     - blocklist
+  subgroups: false
 quality_control:
   perform: true
   summary:
