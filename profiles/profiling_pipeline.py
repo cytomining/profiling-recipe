@@ -36,25 +36,33 @@ for batch in profile_config:
         if "normalize" in pipeline:
             if pipeline["normalize"]["perform"]:
                 print(f"Now normalizing... plate: {plate}")
+                if pipeline["normalize"]["min_cells"] == 1:
+                    norm_samples = "all"
+                else:
+                    norm_samples = f'Metadata_Object_Count >= {pipeline["normalize"]["min_cells"]}'
                 run_pipeline.pipeline_normalize(
-                    batch=batch, plate=plate, steps=pipeline["normalize"], samples="all"
+                    batch=batch, plate=plate, steps=pipeline["normalize"], samples=norm_samples
                 )
 
         if "normalize_negcon" in pipeline:
             if pipeline["normalize_negcon"]["perform"]:
                 print(f"Now normalizing to negcon... plate: {plate}")
+                if pipeline["normalize_negcon"]["min_cells"] == 1:
+                    norm_negcon_samples = "Metadata_control_type == 'negcon'"
+                else:
+                    norm_negcon_samples = f"Metadata_control_type == 'negcon' & Metadata_Object_Count >= {pipeline['normalize_negcon']['min_cells']}"
                 run_pipeline.pipeline_normalize(
                     batch=batch,
                     plate=plate,
                     steps=pipeline["normalize_negcon"],
-                    samples="Metadata_control_type == 'negcon'",
+                    samples=norm_negcon_samples,
                     suffix="negcon",
                 )
 
 if "feature_select" in pipeline:
     if pipeline["feature_select"]["perform"]:
         print(f"Now feature selecting... level: {pipeline['feature_select']['level']}")
-        run_pipeline.pipeline_feature_select(steps=pipeline["feature_select"])
+        run_pipeline.pipeline_feature_select(steps=pipeline["feature_select"], min_cells = pipeline["feature_select"]["min_cells"])
 
 if "feature_select_negcon" in pipeline:
     if pipeline["feature_select_negcon"]["perform"]:
@@ -62,7 +70,7 @@ if "feature_select_negcon" in pipeline:
             f"Now feature selecting negcon profiles... level: {pipeline['feature_select_negcon']['level']}"
         )
         run_pipeline.pipeline_feature_select(
-            steps=pipeline["feature_select_negcon"], suffix="negcon"
+            steps=pipeline["feature_select_negcon"], suffix="negcon", min_cells = pipeline["feature_select_negcon"]["min_cells"]
         )
 
 if "quality_control" in pipeline:
