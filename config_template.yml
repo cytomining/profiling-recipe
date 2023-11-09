@@ -28,12 +28,14 @@ normalize:
   features: infer
   mad_robustize_fudge_factor: 0
   image_features: true
+  min_cells: 1
 normalize_negcon:
   perform: true
   method: mad_robustize
   features: infer
   mad_robustize_fudge_factor: 0
   image_features: true
+  min_cells: 1
 feature_select:
   perform: true
   features: infer
@@ -45,6 +47,7 @@ feature_select:
     - correlation_threshold
     - drop_na_columns
     - blocklist
+  min_cells: 1
 feature_select_negcon:
   perform: true
   features: infer
@@ -56,6 +59,7 @@ feature_select_negcon:
     - correlation_threshold
     - drop_na_columns
     - blocklist
+  min_cells: 1
 quality_control:
   perform: true
   summary:
