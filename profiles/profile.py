@@ -222,7 +222,7 @@ class RunPipeline(object):
             mad_robustize_epsilon=fudge_factor,
         )
 
-    def pipeline_feature_select(self, steps, suffix=None):
+    def pipeline_feature_select(self, steps, suffix=None,min_cells=1):
         feature_select_steps = steps
         pipeline_output = self.pipeline["output_dir"]
 
@@ -288,6 +288,10 @@ class RunPipeline(object):
 
                 if level == "plate":
                     df = df.drop(columns=["Metadata_batch"])
+                    if min_cells == 1:
+                        fs_samples = "all"
+                    else:
+                        fs_samples = df.query(f"Metadata_Object_Count >= {min_cells}").index.values.tolist()
                     feature_select(
                         profiles=df,
                         features=feature_select_features,
@@ -296,6 +300,7 @@ class RunPipeline(object):
                         output_file=feature_select_output_file_plate,
                         compression_options=self.pipeline_options["compression"],
                         float_format=self.pipeline_options["float_format"],
+                        samples=fs_samples,
                     )
                     if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
                         sub_df = sub_df.drop(columns=["Metadata_batch"])
@@ -317,11 +322,16 @@ class RunPipeline(object):
                     if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
                         sub_all_plates_df = concat_dataframes(sub_all_plates_df, sub_df, image_features)
             if level == "batch":
+                if min_cells == 1:
+                    fs_samples = "all"
+                else:
+                    fs_samples = batch_df.query(f"Metadata_Object_Count >= {min_cells}").index.values.tolist()
                 fs_df = feature_select(
                     profiles=batch_df,
                     features=feature_select_features,
                     image_features=image_features,
                     operation=feature_select_operations,
+                    samples=fs_samples,
                 )
                 if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
                     sub_fs_df = feature_select(
@@ -442,11 +452,16 @@ class RunPipeline(object):
                         write_gct(profiles=sub_fs_df, output_file=sub_gct_file)                        
 
         if level == "all":
+            if min_cells == 1:
+                fs_samples = "all"
+            else:
+                fs_samples = all_plates_df.query(f"Metadata_Object_Count >= {min_cells}").index.values.tolist()
             fs_df = feature_select(
                 profiles=all_plates_df,
                 features=feature_select_features,
                 image_features=image_features,
                 operation=feature_select_operations,
+                samples=fs_samples,
             )
             if "subgroups" in feature_select_steps.keys() and feature_select_steps["subgroups"]:
                 sub_fs_df = feature_select(
